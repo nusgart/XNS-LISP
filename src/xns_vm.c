@@ -1,23 +1,41 @@
 #include "xns_lisp.h"
 #include <sys/mman.h>
+
+/// FOR PRODUCTION DEFINE TO 1 MB -- 1048576
+#define MIN_HEAP_SIZE 128
+
 // create an xns_vm
 struct xns_vm *xns_create_vm(size_t initial_heap_size){
     xns_vm *vm = calloc(1, sizeof(xns_vm));
     vm->frame = NULL;
     vm->symbols = NULL;
-    vm->heap.size = (initial_heap_size < 1024*1024)? 1024*1024 : initial_heap_size;
+    if(initial_heap_size < MIN_HEAP_SIZE){
+        initial_heap_size = MIN_HEAP_SIZE;
+    }
+    vm->heap.size = initial_heap_size;
+    vm->heap.used = 0;
+    vm->heap.allocs = 0;
+    vm->gc_active = false;
+    vm->scan1 = NULL;
+    vm->scan2 = NULL;
+    vm->env = NULL;
     vm->heap.old_heap = NULL;
     vm->heap.current_heap = mmap(NULL, initial_heap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     vm->current_objectID = 0;
     vm->current_symbol = 0;
-    vm->NIL = xns_intern(vm, "NIL");
-    vm->T = xns_intern(vm, "T");
-    // protect the VM from its own gc
+    // we need to protect the VM from its own gc
     xns_gc_register(vm, &vm->symbols);
-    xns_gc_register(vm, &vm->env);
+    vm->symbols = NULL;
+    vm->NIL = xns_intern(vm, "NIL");
+    asm volatile("": : :"memory");
+    vm->symbols->cdr = vm->NIL;
+    asm volatile("": : :"memory");
     xns_gc_register(vm, &vm->NIL);
+    vm->T = xns_intern(vm, "T");
     xns_gc_register(vm, &vm->T);
-    return NULL;//TODO implement
+    vm->env = xns_make_env(vm, NULL);
+    xns_gc_register(vm, &vm->env);
+    return vm;
 }
 // destroy an xns_vm
 void xns_destroy_vm(struct xns_vm *vm){
@@ -26,12 +44,17 @@ void xns_destroy_vm(struct xns_vm *vm){
 
 static struct xns_gcframe *makeframe(struct xns_vm *vm){
     struct xns_gcframe *frame = calloc(1, sizeof(struct xns_gcframe));
-    frame->next = vm->frame;
+    frame->prev = vm->frame;
     if(vm->frame){
-        vm->frame->prev = frame;
+        printf("Making frame\n");
+        vm->frame->next = frame;
+        vm->frame = frame;
     }else{
+        printf("Creating first gcframe\n");
         vm->firstframe = frame;
+        vm->frame = frame;
     }
+    return frame;
 }
 
 static void deleteframe(struct xns_gcframe *frame){
@@ -68,6 +91,8 @@ void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr){
             if(curr->ptrs[i] == NULL){
                 curr->ptrs[i] = ptr;
                 curr->counts[i] = 1;
+                //printf("Registered pointer %p at index %d\n", ptr, i);
+                return;
             }
         }
     }
@@ -96,6 +121,24 @@ void xns_gc_unregister(struct xns_vm *vm, struct xns_object **ptr){
     }
 }
 
+// compact gc frames
 void xns_gc_compactframe(struct xns_vm *vm){
     // TODO implement
+    if(!vm->frame)return;
+    struct xns_gcframe *curr;
+    for(curr = vm->firstframe; curr;){
+        bool clear = true;
+        for(int i = 0; i < XNS_GCFRAME_SIZE; i++){
+            if(curr->ptrs[i] && curr->counts[i] > 0){
+                clear = false;
+            }
+        }
+        if(clear){
+            struct xns_gcframe *tmp = curr;
+            curr = curr->next;
+            deleteframe(tmp);
+        }else{
+            curr = curr->next;
+        }
+    }
 }
