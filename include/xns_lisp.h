@@ -19,11 +19,7 @@
 
 #include "xns_obj.h"
 #include "xns_vm.h"
-
+#include "xns_ops.h"
 //#include "xnsio.h"
 //#include "xnseval.h"
-
-// for now
-struct xns_object *xns_intern(struct xns_globals *glob, char *symname);
-
 #endif //XNS_LISP_H

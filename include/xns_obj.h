@@ -34,6 +34,8 @@ typedef enum xns_type{
   XNS_MACRO,
   // an environment frame: this is a map from symbols to actual xns_object values
   XNS_ENV,
+  // an object that has been moved to a new heap -- should only EVER be present during a GC
+  XNS_MOVED,
   // a fixed-size integer (in this implementation, it is implemented as long)
   XNS_FIXNUM,
   // an integer -- UNIMPLEMENTED
@@ -63,6 +65,8 @@ struct xns_object{
   unsigned int object_id;
   // the size of the object
   size_t size;
+  // pointer to the parent VM
+  struct xns_vm *vm;
   //// OBJECT CONTENTS
   union{
     // cons cell
@@ -104,6 +108,8 @@ struct xns_object{
         // will somehow hold the signature for type safety??
         struct xns_object *signature; 
     };
+    // handle or moved
+    xns_object *ptr;
     // foreign pointer -- unimplemented but final
     void *foreign_pointer;
   };

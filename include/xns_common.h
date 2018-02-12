@@ -21,6 +21,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 typedef struct xns_object xns_object;
 typedef struct xns_vm xns_vm;
