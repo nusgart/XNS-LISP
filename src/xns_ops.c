@@ -114,3 +114,51 @@ struct xns_object *xns_cons(xns_vm *vm, xns_object *car, xns_object *cdr){
     xns_gc_unregister(vm, &cdr);
     return obj;
 }
+
+struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
+    struct xns_object *obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
+    obj->fixnum = value;
+    return obj;
+}
+struct xns_object *xns_make_double(struct xns_vm *vm, double value){
+    struct xns_object *obj = xns_alloc_object(vm, XNS_DOUBLE, sizeof(double));
+    obj->dval = value;
+    return obj;
+}
+struct xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value){
+    struct xns_object *obj = xns_alloc_object(vm, XNS_PRIMITIVE, sizeof(xns_primitive));
+    obj->primitive = value;
+    return obj;
+}
+struct xns_object *xns_make_string(struct xns_vm *vm, char *value){
+    size_t len = strlen(value) + 1;
+    struct xns_object *obj = xns_alloc_object(vm, XNS_STRING, len);
+    strncpy(obj->string, value, len);
+    return obj;
+}
+struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env){
+    xns_gc_register(vm, &params);
+    xns_gc_register(vm, &body);
+    xns_gc_register(vm, &env);
+    struct xns_object *obj = xns_alloc_object(vm, XNS_FUNCTION, 3 * sizeof(struct xns_object*));
+    obj->args = params;
+    obj->body = body;
+    obj->env = env;
+    xns_gc_unregister(vm, &params);
+    xns_gc_unregister(vm, &body);
+    xns_gc_unregister(vm, &env);
+    return obj;
+}
+struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env){
+    xns_gc_register(vm, &params);
+    xns_gc_register(vm, &body);
+    xns_gc_register(vm, &env);
+    struct xns_object *obj = xns_alloc_object(vm, XNS_MACRO, 3 * sizeof(struct xns_object*));
+    obj->args = params;
+    obj->body = body;
+    obj->env = env;
+    xns_gc_unregister(vm, &params);
+    xns_gc_unregister(vm, &body);
+    xns_gc_unregister(vm, &env);
+    return obj;
+}

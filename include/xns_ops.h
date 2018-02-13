@@ -47,4 +47,15 @@ struct xns_object *xns_assoc(xns_object *env, xns_object *sym, xns_object *value
 struct xns_object *xns_car(xns_object *obj);
 struct xns_object *xns_cdr(xns_object *obj);
 struct xns_object *xns_cons(xns_vm *vm, xns_object *car, xns_object *cdr);
+
+// numbers
+//////////////TODO
+// constructors
+struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value);
+struct xns_object *xns_make_double(struct xns_vm *vm, double value);
+struct xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value);
+struct xns_object *xns_make_string(struct xns_vm *vm, char *value);
+struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env);
+struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env);
+//struct xns_object *xns_make_fixnums(struct xns_vm *vm, long value); // this is a template
 #endif //XNS_OPS_H
