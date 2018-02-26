@@ -50,8 +50,8 @@ bool xns_eq(struct xns_object *a, struct xns_object *b);
 bool xns_nil(xns_object *obj);
 // environment
 struct xns_object *xns_make_env(xns_vm *vm, xns_object *parent);
-struct xns_object *xns_find(xns_object *env, xns_object *sym);
-struct xns_object *xns_assoc(xns_object *env, xns_object *sym, xns_object *value);
+struct xns_object *xns_assoc(xns_object *env, xns_object *sym);
+struct xns_object *xns_set(xns_object *env, xns_object *sym, xns_object *value);
 // Cons Cells
 struct xns_object *xns_car(struct xns_object *obj);
 struct xns_object *xns_cdr(struct xns_object *obj);

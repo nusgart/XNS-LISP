@@ -28,6 +28,6 @@
 
 typedef struct xns_object xns_object;
 typedef struct xns_vm xns_vm;
-typedef struct xns_object *(*xns_primitive)(struct xns_vm *vm, struct xns_object **env, struct xns_object **args);
+typedef struct xns_object *(*xns_primitive)(struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 
 #endif //XNS_COMMON_H

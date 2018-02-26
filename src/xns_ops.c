@@ -77,7 +77,7 @@ struct xns_object *xns_make_env(xns_vm *vm, xns_object *parent){
 /*
   An environment is implemented as an association list of symbols to values
  */
-struct xns_object *xns_find(xns_object *env, xns_object *sym){
+struct xns_object *xns_assoc(xns_object *env, xns_object *sym){
     struct xns_object *curr = env->vars;
     while(curr && curr != env->vm->NIL){
         assert(curr->type == XNS_CONS);
@@ -89,9 +89,9 @@ struct xns_object *xns_find(xns_object *env, xns_object *sym){
     if(!env->parent || env->parent == env->vm->NIL){
         return env->vm->NIL;
     }
-    return xns_find(env->parent, sym);
+    return xns_assoc(env->parent, sym);
 }
-struct xns_object *xns_assoc(xns_object *env, xns_object *sym, xns_object *value){
+struct xns_object *xns_set(xns_object *env, xns_object *sym, xns_object *value){
     xns_gc_register(env->vm, &env);
     xns_gc_register(env->vm, &sym);
     xns_gc_register(env->vm, &value);

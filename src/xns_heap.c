@@ -81,9 +81,14 @@ static struct xns_object *_xns_forward(struct xns_vm *vm, struct xns_object *obj
     return nw;
 }
 void xns_print_heap(struct xns_vm *vm);
+
+////INTERNAL
+void xns_gc_compactframe(struct xns_vm *vm);
+
 // use vm->frame to forward all of the roots and update them
 static void _xns_forward_roots(struct xns_vm *vm){
     int cnt = 0, us = 0;
+    long total_unused = 0;
     for(struct xns_gcframe *frame = vm->firstframe; frame; frame = frame->next){
         printf("Handling %d-th frame\n", cnt++);
         us = 0;
@@ -94,7 +99,12 @@ static void _xns_forward_roots(struct xns_vm *vm){
             *frame->ptrs[i] = _xns_forward(vm, *frame->ptrs[i]); 
             us++;
         }
+        total_unused += XNS_GCFRAME_SIZE - us;
         printf("%d entries used in frame %d\n", us, cnt-1);
+    }
+    // frame compaction
+    if( (total_unused >  0.75 * XNS_GCFRAME_SIZE * cnt) && cnt > 4){
+        xns_gc_compactframe(vm);
     }
     printf("Finished -- had %d frames\n", cnt);
 }

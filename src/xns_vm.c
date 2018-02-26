@@ -148,7 +148,7 @@ void xns_gc_unregister(struct xns_vm *vm, struct xns_object **ptr){
 
 // compact gc frames
 void xns_gc_compactframe(struct xns_vm *vm){
-    // TODO implement
+    // TODO perhaps coalesce frames
     if(!vm->frame)return;
     struct xns_gcframe *curr;
     for(curr = vm->firstframe; curr;){

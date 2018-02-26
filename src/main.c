@@ -53,9 +53,9 @@ int main(int argc, char**argv){
     xns_object *sym = xns_intern(vm, "foo");
     printf("Created symbol foo\n");
     xns_gc_register(vm,  &sym);
-    xns_assoc(vm->env, sym, objects[NOBJ - 3]);
+    xns_set(vm->env, sym, objects[NOBJ - 3]);
     printf("Associated value\n");
-    xns_object *o = xns_find(vm->env, sym);
+    xns_object *o = xns_assoc(vm->env, sym);
     printf("Found object %u (type=%d size=%lu fixnum=%ld) for symbol %s\n", o->object_id, o->type, o->size, o->fixnum, sym->symname);
     // clear out objects so that the GC can clean up
     for(int i = 0 ; i < NOBJ+1; i++){

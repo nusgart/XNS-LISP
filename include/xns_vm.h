@@ -25,7 +25,8 @@
  * An xns_gcframe stores a single frame's worth of root pointers, which are the
  * pointers that the GC starts its scan for live objects from.  Additionally,
  * as XNS uses a precise copying GC, these pointers will be mutated to point
- * to the new location (which is why they are pointers to pointers)
+ * to the new location (which is why they are pointers to pointers).  Do not
+ * mess with GC frames directly, just use the registration API.
  */ 
 struct xns_gcframe{
     struct xns_object **ptrs[XNS_GCFRAME_SIZE];
@@ -93,7 +94,8 @@ void xns_vm_gc(struct xns_vm *vm, size_t heapsize);
  * (this is how CheneyGC works), which 
  */
 void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr);
-// unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
+/**
+ * Unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
+ */
 void xns_gc_unregister(struct xns_vm *vm, struct xns_object **ptr);
-
 #endif //XNS_VM_H
