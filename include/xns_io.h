@@ -22,8 +22,13 @@
 
 char *xns_to_string(struct xns_object *object);
 void  xns_print_object(struct xns_object *object);
-// read an object from memory
-struct xns_object *xns_read_memory(char *memory, size_t length);
-struct xns_object *xns_read_file(FILE *fp);
-
+// read an object from fp(this doesn't have to be a file on disk - lookup POSIX
+// fmemopen(3) and open_memstream(3), GNU fopencookie(3), and BSD funopen(3). 
+struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp);
+// read an object from a buffer - this is actually implemented using fmemopen(3)
+struct xns_object *xns_read_buffer(struct xns_vm *vm, char *memory, size_t length);
+// read a whole file
+struct xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp);
+// read a whole buffer
+struct xns_object *xns_read_whole_buffer(struct xns_vm *vm, void *memory, size_t length);
 #endif //XNS_IO_H

@@ -23,24 +23,28 @@
 struct xns_vm *xns_create_vm(size_t initial_heap_size){
     xns_vm *vm = calloc(1, sizeof(xns_vm));
     vm->frame = NULL;
-    vm->symbols = NULL;
     if(initial_heap_size < MIN_HEAP_SIZE){
         initial_heap_size = MIN_HEAP_SIZE;
     }
+    // setup heap
     vm->heap.size = initial_heap_size;
     vm->heap.used = 0;
     vm->heap.allocs = 0;
+    vm->heap.current_heap = mmap(NULL, initial_heap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    // initialize gc variables
+    vm->heap.old_heap = NULL;
     vm->gc_active = false;
     vm->scan1 = NULL;
     vm->scan2 = NULL;
-    vm->env = NULL;
-    vm->heap.old_heap = NULL;
-    vm->heap.current_heap = mmap(NULL, initial_heap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    // initialize object and symbol count
     vm->current_objectID = 0;
     vm->current_symbol = 0;
+    // null out symbols and env 
+    vm->symbols = NULL;
+    vm->env = NULL;
     // we need to protect the VM from its own gc
     xns_gc_register(vm, &vm->symbols);
-    vm->symbols = NULL;
+    // register symbols
     vm->NIL = xns_intern(vm, "NIL");
     asm volatile("": : :"memory");
     vm->symbols->cdr = vm->NIL;
@@ -50,6 +54,12 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     xns_gc_register(vm, &vm->T);
     vm->env = xns_make_env(vm, NULL);
     xns_gc_register(vm, &vm->env);
+    vm->Rparen = xns_intern(vm, ")");
+    xns_gc_register(vm, &vm->Rparen);
+    vm->Dot = xns_intern(vm, ".");
+    xns_gc_register(vm, &vm->Dot);
+    vm->Quote = xns_intern(vm, "quote");
+    xns_gc_register(vm, &vm->Quote);
     return vm;
 }
 // destroy an xns_vm

@@ -15,8 +15,13 @@
  */
 #include "xns_lisp.h"
 
-//symbols and gensyms
-xns_object *xns_intern(xns_vm *vm, char *name){
+////symbols and gensyms
+
+/**
+ * xns_intern interns a symbol with the given name: that is, it either finds the existing symbol with
+ * said name, or creates a new symbol with the given name.
+ */
+xns_object *xns_intern(xns_vm *vm, const char *name){
     struct xns_object *p = vm->symbols;
     while(p && p != vm->NIL){
         if(!strcmp(p->car->symname, name)){
@@ -24,7 +29,7 @@ xns_object *xns_intern(xns_vm *vm, char *name){
         }
         p = p->cdr;
     }
-    size_t size = strlen(name) + 1 + sizeof(size_t) * 5;
+    size_t size = strlen(name) + 1 + sizeof(size_t);
     struct xns_object *obj = xns_alloc_object(vm, XNS_SYMBOL, size);
     obj->symid = vm->current_symbol++;
     strcpy(obj->symname, name);
@@ -34,18 +39,20 @@ xns_object *xns_intern(xns_vm *vm, char *name){
     xns_gc_unregister(vm, &obj);
     return obj;
 }
-
+// create a GENSYM -- a generated symbol that is guaranteed to have an unique value -- it will not be EQ to any other
+//    symbol, even the SAME SYMBOL READ IN ANOTHER TIME: (EQ '#:G191 #:G191) evaluates to NIL!
 xns_object *xns_gensym(xns_vm *vm){
-    char gs[] = "G:1234567890";
+    char gs[] = "#:G1234567890";
     struct xns_object *obj = xns_alloc_object(vm, XNS_GENSYM, sizeof(gs) + sizeof(size_t));
     char *gsym = obj->symname;
     obj->symid = vm->current_symbol++;
-    snprintf(gsym, sizeof(gs), "G:%lu", obj->symid);
+    snprintf(gsym, sizeof(gs), "#:G%lu", obj->symid);
     xns_gc_register(vm, &obj);
     vm->symbols = xns_cons(vm, obj, vm->symbols);
     xns_gc_unregister(vm, &obj);
     return obj;
 }
+// are 
 bool xns_eq(xns_object *a, xns_object *b){
     if(!a || !b) return !a && !b;
     if(a == b) return true;
@@ -53,6 +60,7 @@ bool xns_eq(xns_object *a, xns_object *b){
     if(b->type != XNS_SYMBOL && b->type != XNS_GENSYM) return false;
     return a==b || (a->vm == b->vm && a->symid == b->symid);
 }
+// is obj nill? (Nill is the Lisp equivalent of NULL -- it is the empty list, false, and also a symbol)
 bool xns_nil(xns_object *obj){
     return !obj || obj == obj->vm->NIL;
 }
@@ -129,6 +137,16 @@ struct xns_object *xns_cons(xns_vm *vm, xns_object *car, xns_object *cdr){
     xns_gc_unregister(vm, &cdr);
     return obj;
 }
+struct xns_object *xns_nreverse(struct xns_object *list){
+    struct xns_object *obj = list->vm->NIL;
+    while(!xns_nil(list)){
+        struct xns_object *hd = list;
+        list = list->cdr;
+        hd->cdr = obj;
+        obj = hd;
+    }
+    return obj;
+}
 
 struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
     struct xns_object *obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
@@ -149,6 +167,7 @@ struct xns_object *xns_make_string(struct xns_vm *vm, char *value){
     size_t len = strlen(value) + 1;
     struct xns_object *obj = xns_alloc_object(vm, XNS_STRING, len);
     strncpy(obj->string, value, len);
+    obj->string[len-1] = 0; 
     return obj;
 }
 struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env){

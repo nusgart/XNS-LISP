@@ -24,7 +24,7 @@
  * Create or find a symbol with the given name.  As symbols are unique in a
  * given VM (namewise), this should be the only function to create symbols!
  */
-struct xns_object *xns_intern(xns_vm *vm, char *name);
+struct xns_object *xns_intern(xns_vm *vm, const char *name);
 /*
  * Generate a "GENSYM" (generated symbol).  These are used when one needs a
  * symbol but needs it to be completely unique (ex: to avoid variable capture
@@ -32,11 +32,20 @@ struct xns_object *xns_intern(xns_vm *vm, char *name);
  */
 struct xns_object *xns_gensym(xns_vm *vm);
 /*
- *  Are the two objects given pointerwise equal or the same symbol?
+ * Are the two objects given pointerwise equal or the same symbol? EQ ONLY
+ * WORKS ON SYMBOLS! WHETHER TO NON-SYMBOL OBJECTS ARE EQ IS UNSPECIFIED!
+ * (EQ 1 1) or even (eq a a) MAY EVALUATE TO EITHER 'T OR 'NIL, POSSIBLY BOTH
+ * DURING THE EXECUTION OF THE SAME PROGRAM!
+ * 
+ * Note: Pointerwise equality should be enough to compare two symbols but the
+ * symbol id is compared just in case xns_eq is called during the middle of a
+ * GC, or symbols are accidentally copied. 
  */
-bool xns_eq(xns_object *a, xns_object *b);
+bool xns_eq(struct xns_object *a, struct xns_object *b);
 /*
- * Is the given object NIL?
+ * Is the given object eq to NIL?
+ * -- xns_nil should be the same is (EQ OBJ 'NIL) unless obj==NULL 
+ * (Note: NIL is the Lisp equivalent of NULL -- it is the empty list, a symbol named 'NIL, and false)
  */
 bool xns_nil(xns_object *obj);
 // environment
@@ -44,10 +53,10 @@ struct xns_object *xns_make_env(xns_vm *vm, xns_object *parent);
 struct xns_object *xns_find(xns_object *env, xns_object *sym);
 struct xns_object *xns_assoc(xns_object *env, xns_object *sym, xns_object *value);
 // Cons Cells
-struct xns_object *xns_car(xns_object *obj);
-struct xns_object *xns_cdr(xns_object *obj);
-struct xns_object *xns_cons(xns_vm *vm, xns_object *car, xns_object *cdr);
-
+struct xns_object *xns_car(struct xns_object *obj);
+struct xns_object *xns_cdr(struct xns_object *obj);
+struct xns_object *xns_cons(struct xns_vm *vm, struct xns_object *car, struct xns_object *cdr);
+struct xns_object *xns_nreverse(struct xns_object *list);
 // numbers
 //////////////TODO
 // constructors

@@ -1,7 +1,7 @@
 ### Copyright 2018 - Nicholas Nusgart
 ### XNS-Lisp Makefile
 CFLAGS=-std=gnu11 -O0 -g -Iinclude -Wall -Wextra
-OBJECTS=src/main.o src/xns_heap.o src/xns_ops.o src/xns_vm.o
+OBJECTS=src/main.o src/xns_heap.o src/xns_ops.o src/xns_vm.o src/xns_io.o
 
 .PHONY: all clean
 

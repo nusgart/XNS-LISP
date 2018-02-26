@@ -57,5 +57,15 @@ int main(int argc, char**argv){
     printf("Associated value\n");
     xns_object *o = xns_find(vm->env, sym);
     printf("Found object %u (type=%d size=%lu fixnum=%ld) for symbol %s\n", o->object_id, o->type, o->size, o->fixnum, sym->symname);
+    // clear out objects so that the GC can clean up
+    for(int i = 0 ; i < NOBJ+1; i++){
+        xns_gc_unregister(vm, &objects[i]);
+    }
+    memset(objects, 0, sizeof(objects));
+    // RPL -- READ PRINT LOOP (It's only missing EVAL!)
+    while(!feof(stdin)){
+        struct xns_object *rdobj = xns_read_file(vm, stdin);
+        xns_print_object(rdobj);
+    }
     return 0;
 }

@@ -16,10 +16,12 @@
 
 #ifndef XNS_LISP_H
 #define XNS_LISP_H
-
+// include all xns headers
+#include "xns_common.h"
 #include "xns_obj.h"
 #include "xns_vm.h"
 #include "xns_ops.h"
-//#include "xnsio.h"
-//#include "xnseval.h"
+#include "xns_io.h"
+#include "xns_prims.h"
+//#include "xns_eval.h"
 #endif //XNS_LISP_H

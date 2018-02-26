@@ -18,19 +18,21 @@
 #define XNS_OBJ_H
 
 #include "xns_common.h"
-
+/**
+ * xns_type describes the type of an xns_object.
+ */
 typedef enum xns_type{
-  // not a valid type -- must have been uninitialized
+  // not a valid type -- the object wasn't initialized or is garbage data!
   XNS_INVL=0,
-  // a cons Cell -- points to 
+  // a cons Cell -- this is a pair of two xns_objects (pointerwise, as always) 
   XNS_CONS,
-  // symbol -- compare eq
+  // Symbols are named atoms that can be compared with EQ (there is only symbol with a given name). 
   XNS_SYMBOL,
-  // a primitive operation (implemented in C code)
+  // A primitive operation (implemented in C code).
   XNS_PRIMITIVE,
-  // a function (implemented in XNS Lisp)
+  // A normal function (implemented in XNS Lisp code).
   XNS_FUNCTION,
-  // a macro -- UNIMPLEMENTED
+  // A macro -- UNIMPLEMENTED
   XNS_MACRO,
   // an environment frame: this is a map from symbols to actual xns_object values
   XNS_ENV,
@@ -38,25 +40,28 @@ typedef enum xns_type{
   XNS_MOVED,
   // a fixed-size integer (in this implementation, it is implemented as long)
   XNS_FIXNUM,
-  // an integer -- UNIMPLEMENTED
+  // an integer (any size) -- UNIMPLEMENTED
   XNS_INTEGER,
   // a doub
   XNS_DOUBLE,
-  // a C-style null terminated string (but size is used as a sanity check) 
+  // a C-style null terminated string (but size is used as a sanity check): stored inline
   XNS_STRING,
   // a rational number -- UNIMPLEMENTED
   XNS_RATIONAL,
-  // a generated symbol -- this can only be returned by a 
+  // a generated symbol -- these are NOT interned -- see ususal lisp expanation
   XNS_GENSYM,
   // a pointer to a foreign function -- UNIMPLEMENTED
   XNS_FOREIGN_FUNC,
   // a pointer to a foreign object
   XNS_FOREIGN_PTR,
-  // allow normal C code to interact with xns_objects -- unimplemented
+  // allow normal C code to interact with xns_objects -- partially implemented
   XNS_HANDLE
 }  xns_type;
 
-// Represents an XNS-Object
+/**
+ * This structure represents an XNS object in list structured memory (except
+ * for XNS_HANDLEs, which are convience )
+ */
 struct xns_object{
   //// OBJECT HEADER
   // the object's type
@@ -99,7 +104,10 @@ struct xns_object{
     // double
     double dval;
     // string
-    char *string;
+    struct{
+        size_t len;
+        char string[];
+    };
     // rational -- unimplemented -- will change
     void *rational_implementation;
     // foreign function pointer -- unimplemented but this probably won't change
