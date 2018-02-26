@@ -96,7 +96,7 @@ static void deleteframe(struct xns_gcframe *frame){
 //// If you don't understand this please just use the handle api
 /// CURRENTLY ORDER 2 * number of frames * frame_size = 2046 * nframes
 // register a local variable -- this is primarily for internal purposes
-void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr){
+void xns_gc_register(struct xns_vm *vm, struct xns_object *const*ptr){
     struct xns_gcframe *curr = vm->firstframe;
     if(!vm->frame){
         curr = makeframe(vm);
@@ -114,7 +114,7 @@ void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr){
     for(curr = vm->firstframe; curr; curr = curr->next){
         for(int i = 0; i < XNS_GCFRAME_SIZE; i++){
             if(curr->ptrs[i] == NULL){
-                curr->ptrs[i] = ptr;
+                curr->ptrs[i] = (struct xns_object**)ptr;
                 curr->counts[i] = 1;
                 //printf("Registered pointer %p at index %d\n", ptr, i);
                 return;
@@ -123,11 +123,11 @@ void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr){
     }
     // make a new frame
     curr = makeframe(vm);
-    curr->ptrs[0] = ptr;
+    curr->ptrs[0] = (struct xns_object**)ptr;
     curr->counts[0] = 1;
 }
 // unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
-void xns_gc_unregister(struct xns_vm *vm, struct xns_object **ptr){
+void xns_gc_unregister(struct xns_vm *vm, struct xns_object *const*ptr){
     if(!vm->frame) return;
     struct xns_gcframe *curr = vm->firstframe; 
     // try to find the pointer

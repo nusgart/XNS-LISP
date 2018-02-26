@@ -22,6 +22,7 @@
 char *xns_to_string(struct xns_object *object){
     //TODO finish implementing
     char *desc, *fmt, *res;
+    int as_len=0;
     if(!object) return strdup("#<NULLPTR>");
     switch(object->type){
         case XNS_INVL:
@@ -31,7 +32,10 @@ char *xns_to_string(struct xns_object *object){
             case XNS_FOREIGN_PTR:
                 break;
             case XNS_DOUBLE:
-                asprintf(&desc, "%f", object->dval);
+                as_len = asprintf(&desc, "%f", object->dval);
+                if(as_len == -1){
+                    //TODO error
+                }
                 return desc;
             case XNS_PRIMITIVE:
                 return strdup("#<PRIMITIVE>");
@@ -39,7 +43,10 @@ char *xns_to_string(struct xns_object *object){
                 return xns_to_string(object->ptr);
                 break;
             case XNS_FIXNUM:
-                asprintf(&desc, "%ld", object->fixnum);
+                as_len = asprintf(&desc, "%ld", object->fixnum);
+                if(as_len == -1){
+                    //TODO error
+                }
                 return desc;
             case XNS_STRING:
                 return strdup(object->string);
@@ -52,7 +59,10 @@ char *xns_to_string(struct xns_object *object){
             case XNS_CONS:
                 a1 = xns_to_string(object->car);
                 a2 = xns_to_string(object->cdr);
-                asprintf(&desc, "(%s . %s)", a1, a2);
+                as_len = asprintf(&desc, "(%s . %s)", a1, a2);
+                if(as_len == -1){
+                    //TODO error
+                }
                 free(a1); free(a2);
                 return desc;
             #else
@@ -63,11 +73,17 @@ char *xns_to_string(struct xns_object *object){
             while(true){
                 char *o = desc;
                 len = asprintf(&desc, "%s%s ", desc, xns_to_string(obj->car));
+                if(len == (size_t)-1){
+                    //TODO error
+                }
                 free(o);
                 if(xns_nil(obj->cdr)) break;
                 if(obj->cdr->type != XNS_CONS){
                     o = desc;
-                    asprintf(&desc, "%s . %s)", desc, xns_to_string(obj->cdr));
+                    as_len = asprintf(&desc, "%s . %s)", desc, xns_to_string(obj->cdr));
+                    if(as_len == -1){
+                        //TODO error
+                    }
                     free(o);
                     return desc;
                 }
@@ -85,7 +101,10 @@ char *xns_to_string(struct xns_object *object){
             case XNS_MOVED:
                 fmt = "Moved Object --> [%s]";
                 desc = xns_to_string(object->ptr);
-                asprintf(&res, fmt, desc);
+                as_len = asprintf(&res, fmt, desc);
+                if(as_len == -1){
+                    //TODO error
+                }
                 free(desc);
                 return res;
             default:
@@ -100,7 +119,7 @@ void  xns_print_object(struct xns_object *object){
     free(a);
 }
 static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
-    xns_object *list, *car, *cdr;
+    struct xns_object *list=NULL, *car=NULL, *cdr=NULL;
     xns_gc_register(vm, &car);
     xns_gc_register(vm, &cdr);
     xns_gc_register(vm, &list);
@@ -244,7 +263,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
 
 // read a whole file
 struct xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp){
-    struct xns_object *obj;
+    struct xns_object *obj=NULL;
     while(!feof(fp)){
         obj = xns_read_file(vm, fp);
     }

@@ -91,11 +91,20 @@ void xns_vm_gc(struct xns_vm *vm, size_t heapsize);
  * Register a variable (technically any pointer to an xns_object) as a GC root
  * object with the Garbage Collector.  If you fail to do this with a normal
  * xns_object pointer, then the garbage collector WILL move it on collection
- * (this is how CheneyGC works), which 
+ * (this is how CheneyGC works), which will cause problems.
+ * 
+ * NOTE: The pointer being registered MUST be initialized to either NULL or
+ * something in the GC heap!  Do NOT register uninitialized variables - THIS
+ * WILL CAUSE SEEMINGLY INEXPLICABLE HEISENBUGS AND PHASE-OF-THE-MOON CRASHES
+ * whenever a GC happens before the variable is intialized!  Once the root
+ * pointer validity checker is removed from the GC, there will often be no
+ * warning about this becuase at least GCC considers it possible for this
+ * function to initialize *ptr (even though the type of ptr disallows that) and
+ * thus does not issue any warning!
  */
-void xns_gc_register(struct xns_vm *vm, struct xns_object **ptr);
+void xns_gc_register(struct xns_vm *vm, struct xns_object *const*ptr);
 /**
  * Unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
  */
-void xns_gc_unregister(struct xns_vm *vm, struct xns_object **ptr);
+void xns_gc_unregister(struct xns_vm *vm, struct xns_object *const*ptr);
 #endif //XNS_VM_H

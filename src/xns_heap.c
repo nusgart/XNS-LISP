@@ -95,7 +95,7 @@ static void _xns_forward_roots(struct xns_vm *vm){
         for(int i = 0; i < XNS_GCFRAME_SIZE; i++){
             // ignore empty entries
             if(!frame->ptrs[i]) continue;
-            printf("Forwarding root pointer %p with ref count %lu\n", frame->ptrs[i], frame->counts[i]);
+            printf("Forwarding root pointer %p (points to %p) with ref count %lu\n", frame->ptrs[i], *(frame->ptrs[i]), frame->counts[i]);
             *frame->ptrs[i] = _xns_forward(vm, *frame->ptrs[i]); 
             us++;
         }
