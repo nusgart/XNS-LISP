@@ -59,7 +59,7 @@ static struct xns_object *_xns_forward(struct xns_vm *vm, struct xns_object *obj
     ptrdiff_t diff = (uint8_t*)obj - (uint8_t*) vm->heap.old_heap;
     if(diff < 0 || (size_t)diff > vm->heap.size){
         printf("Object %p not in gc heap %p diff %ld\n", obj, vm->heap.current_heap, diff);
-        printf("Object info %d %lu %u", obj->type, obj->size, obj->object_id);
+        printf("Object info type=%d size=%lu id=%u\n", obj->type, obj->size, obj->object_id);
         abort();
         return obj;
     }
