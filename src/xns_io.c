@@ -174,7 +174,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
     while (true){
         int c;
         st: c = getc(fp);
-        if(isspace(c)){ continue;}
+        if(isspace(c) || iscntrl(c)){ continue;}
         switch(c){
             case EOF:
                 return NULL;
@@ -244,6 +244,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
             xns_gc_unregister(vm, &obj);
             return obj;
         }
+        if(!isalnum(c))continue;
         // read a symbol
         while(isalnum(c) || strchr(symbol_chars, c)){
             buffer[idx++] = c;

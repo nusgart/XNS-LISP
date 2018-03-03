@@ -13,15 +13,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  */
+// XNS-Lisp evaluator
+#include "xns_lisp.h"
 
-#ifndef XNS_LISP_H
-#define XNS_LISP_H
-// include all xns headers
-#include "xns_common.h"
-#include "xns_obj.h"
-#include "xns_vm.h"
-#include "xns_ops.h"
-#include "xns_io.h"
-#include "xns_prims.h"
-#include "xns_eval.h"
-#endif //XNS_LISP_H
+struct xns_object *eval(struct xns_object *obj, struct xns_object *env);
+struct xns_object *evalis(struct xns_object *obj, struct xns_object *env);
+struct xns_object *apply(struct xns_object *obj, struct xns_object *env, struct xns_object *args);
+struct xns_object *eval_cond(struct xns_object *obj, struct xns_object *env);
