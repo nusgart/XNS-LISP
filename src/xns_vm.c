@@ -62,9 +62,31 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     xns_gc_register(vm, &vm->Quote);
     return vm;
 }
+static void deleteframe(struct xns_vm *vm, struct xns_gcframe *frame);
 // destroy an xns_vm
 void xns_destroy_vm(struct xns_vm *vm){
     // TODO IMPLEMENT
+    // wipe registered variables clean
+    struct xns_gcframe *curr = vm->firstframe;
+    for(; vm->frame && curr; curr = curr->next){
+        for (int i = 0; i < XNS_GCFRAME_SIZE; i++){
+            if(curr->counts[i] > 0){
+                curr->counts[i] = 0;
+                *(curr->ptrs[i]) = NULL;
+            }
+        }
+    }
+    // free vm frames
+    while(vm->frame){
+        deleteframe(vm, vm->frame);
+    }
+    // free the semispace
+    if(vm->heap.current_heap){
+        munmap(vm->heap.current_heap, vm->heap.size);
+    }
+    // wipe the vm struct's variables
+    memset(vm, 0, sizeof(struct xns_vm));
+    free(vm);
 }
 
 static struct xns_gcframe *makeframe(struct xns_vm *vm){
@@ -82,12 +104,21 @@ static struct xns_gcframe *makeframe(struct xns_vm *vm){
     return frame;
 }
 
-static void deleteframe(struct xns_gcframe *frame){
+static void deleteframe(struct xns_vm *vm, struct xns_gcframe *frame){
+    if(!frame || !vm){
+        return;
+    }
     if(frame->next){
         frame->next->prev = frame->prev;
     }
     if(frame->prev){
         frame->prev->next = frame->next;
+    }
+    if(vm->frame == frame){
+        vm->frame = frame->prev;
+    }
+    if(vm->firstframe == frame){
+        vm->firstframe = frame->next;
     }
     free(frame);
 }
@@ -161,7 +192,7 @@ void xns_gc_compactframe(struct xns_vm *vm){
         if(clear){
             struct xns_gcframe *tmp = curr;
             curr = curr->next;
-            deleteframe(tmp);
+            deleteframe(vm, tmp);
         }else{
             curr = curr->next;
         }

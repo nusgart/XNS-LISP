@@ -72,7 +72,9 @@ char *xns_to_string(struct xns_object *object){
             size_t len = 0;
             while(true){
                 char *o = desc;
-                len = asprintf(&desc, "%s%s ", desc, xns_to_string(obj->car));
+                char *tmp = xns_to_string(obj->car);
+                len = asprintf(&desc, "%s%s ", desc, tmp);
+                free(tmp);
                 if(len == (size_t)-1){
                     //TODO error
                 }
@@ -80,7 +82,9 @@ char *xns_to_string(struct xns_object *object){
                 if(xns_nil(obj->cdr)) break;
                 if(obj->cdr->type != XNS_CONS){
                     o = desc;
+                    char *tm2 = xns_to_string(obj->cdr);
                     as_len = asprintf(&desc, "%s . %s)", desc, xns_to_string(obj->cdr));
+                    free(tm2);
                     if(as_len == -1){
                         //TODO error
                     }
@@ -164,11 +168,13 @@ static int look(FILE*fp){
     ungetc(l, fp);
     return l;
 }
+
 static const char symbol_chars[] = "~!@#$%^&*-_=+:/?<>";
+
 struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
     // TODO
     struct xns_object *obj=NULL;
-    char *buffer = calloc(256, 1);
+    char *buffer = NULL;
     size_t currsize = 256;
     size_t idx = 0;
     while (true){
@@ -191,6 +197,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
             case '.':
                 return vm->Dot;
             case '"':
+                buffer = calloc(256, 1);
                 while((c = getc(fp)) != '"'){
                     buffer[idx++] = c;
                     if(idx == currsize){
@@ -200,6 +207,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
                     }
                 }
                 obj = xns_make_string(vm, buffer);
+                free(buffer);
                 return obj;
             case '\'':
                 xns_gc_register(vm, &obj);
@@ -210,6 +218,7 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
                 return obj;
             default: break;
         }
+        buffer = calloc(256, 1);
         // read a number
         if(isdigit(c) || (c == '-' && isdigit(look(fp)) ) ){
             int base = 10;
@@ -244,7 +253,10 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
             xns_gc_unregister(vm, &obj);
             return obj;
         }
-        if(!isalnum(c))continue;
+        if(!isalnum(c) && !strchr(symbol_chars, c)){
+            free(buffer);
+            continue;
+        }
         // read a symbol
         while(isalnum(c) || strchr(symbol_chars, c)){
             buffer[idx++] = c;

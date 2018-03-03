@@ -67,5 +67,6 @@ int main(int argc, char**argv){
         struct xns_object *rdobj = xns_read_file(vm, stdin);
         xns_print_object(rdobj);
     }
+    xns_destroy_vm(vm);
     return 0;
 }
