@@ -20,7 +20,7 @@
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
 /// basic ops
-xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_object *env, xns_object *args){
+xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){
         return vm->T;
     }
@@ -34,7 +34,7 @@ xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_object *env, xns_object *arg
     if(res) return arg;
     return vm->NIL;
 }
-xns_object *xns_prim_expt  (struct xns_vm *vm, xns_object *env, xns_object *args){
+xns_object *xns_prim_expt  (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1)return vm->T;
     R(args); R(env);
     xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
@@ -44,7 +44,7 @@ xns_object *xns_prim_expt  (struct xns_vm *vm, xns_object *env, xns_object *args
     U(args); U(env); U(arg1);
     return xns_make_double(vm, pow(arg1->dval, arg2->dval));
 }
-xns_object *xns_prim_mod  (struct xns_vm *vm, xns_object *env, xns_object *args){
+xns_object *xns_prim_mod  (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){
         return vm->T;
     }
@@ -59,7 +59,7 @@ xns_object *xns_prim_mod  (struct xns_vm *vm, xns_object *env, xns_object *args)
     double res = fmod(arg1->dval, arg2->dval);
     return xns_make_double(vm, res);
 }
-#define M(x) xns_object * xns_prim_ ## x (struct xns_vm *vm, xns_object *env, xns_object *args){\
+#define M(x) xns_object * xns_prim_ ## x (struct xns_vm *vm, xns_obj env, xns_obj args){\
     if (xns_len(args) != 1)return vm->T;\
     R(args); R(env);\
     xns_obj arg = xns_to_double(vm, eval(args->car, env));\
@@ -97,7 +97,7 @@ M(acosh);
 M(atanh);
 
 // multi-arguement ones
-#define M2(x) xns_object * xns_prim_ ## x (struct xns_vm *vm, xns_object *env, xns_object *args){\
+#define M2(x) xns_object *xns_prim_ ## x (struct xns_vm *vm, xns_obj env, xns_obj args){\
     if (xns_len(args) != 1)return vm->T;\
     R(args); R(env);\
     xns_obj arg1 = xns_to_double(vm, eval(args->car, env));R(arg1);\

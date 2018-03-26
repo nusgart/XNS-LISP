@@ -20,7 +20,7 @@
 
 /// Implementation is almost straight out of J. McCarthy et al 1961
 
-struct xns_object *eval(struct xns_object *obj, struct xns_object *env){
+xns_object *eval(xns_obj obj, xns_obj env){
     if(!obj){
         return env->vm->NIL;
     }
@@ -50,12 +50,12 @@ struct xns_object *eval(struct xns_object *obj, struct xns_object *env){
             xns_gc_register(obj->vm, &obj);
             xns_gc_register(obj->vm, &env);
             xns_obj val = eval(obj->car, env);
-            xns_gc_register(obj->vm, val);
+            xns_gc_register(obj->vm, &val);
             xns_print_object(val);
             xns_obj ret = apply(val, env, obj->cdr);
             xns_gc_unregister(obj->vm, &obj);
             xns_gc_unregister(obj->vm, &env);
-            xns_gc_unregister(obj->vm, val);
+            xns_gc_unregister(obj->vm, &val);
             return ret;
         default:
             // ??? -- should this error?
@@ -63,11 +63,11 @@ struct xns_object *eval(struct xns_object *obj, struct xns_object *env){
     }
     return NULL;
 }
-struct xns_object *evlis(struct xns_object *obj, struct xns_object *env){
+xns_object *evlis(xns_obj obj, xns_obj env){
     if(obj->type != XNS_CONS) return obj;
     xns_gc_register(obj->vm, &obj);
     xns_gc_register(obj->vm, &env);
-    struct xns_object *ret = obj->vm->NIL;
+    xns_obj ret = obj->vm->NIL;
     xns_gc_register(obj->vm, &ret);
     ret = xns_cons(obj->vm, eval(xns_car(obj), env), evlis(xns_cdr(obj), env));
     xns_gc_unregister(obj->vm, &obj);
@@ -76,15 +76,15 @@ struct xns_object *evlis(struct xns_object *obj, struct xns_object *env){
     return ret;
 }
 // this is a seperate function so that xns_prim_macroexpand doesn't have to duplicate apply
-struct xns_object *macroexpand(struct xns_object *fn, struct xns_object *env, struct xns_object *args){
+xns_object *macroexpand(xns_obj fn, xns_obj env, xns_obj args){
     xns_gc_register(fn->vm, &fn);
     xns_gc_register(fn->vm, &env);
     xns_gc_register(fn->vm, &args);
-    struct xns_object *newenv = xns_make_env(fn->vm, fn->env);
+    xns_obj newenv = xns_make_env(fn->vm, fn->env);
     xns_gc_register(fn->vm, &newenv);
     newenv->vars = xns_pair(fn->args, args);
-    struct xns_object *expansion = eval(fn->body, newenv);
-    struct xns_object *ret = eval(expansion, env);
+    xns_obj expansion = eval(fn->body, newenv);
+    xns_obj ret = eval(expansion, env);
     xns_gc_unregister(fn->vm, &fn);
     xns_gc_unregister(fn->vm, &env);
     xns_gc_unregister(fn->vm, &args);
@@ -92,15 +92,15 @@ struct xns_object *macroexpand(struct xns_object *fn, struct xns_object *env, st
     return ret;
 }
 
-struct xns_object *apply(struct xns_object *fn, struct xns_object *env, struct xns_object *args){
+xns_object *apply(xns_obj fn, xns_obj env, xns_obj args){
     if (fn->type == XNS_FUNCTION) {
         xns_gc_register(fn->vm, &fn);
         xns_gc_register(fn->vm, &env);
         xns_gc_register(fn->vm, &args);
-        struct xns_object *newenv = xns_make_env(fn->vm, fn->env);
+        xns_obj newenv = xns_make_env(fn->vm, fn->env);
         xns_gc_register(fn->vm, &newenv);
         newenv->vars = xns_pair(fn->args, evlis(args, env));
-        struct xns_object *ret = eval(fn->body, newenv);
+        xns_obj ret = eval(fn->body, newenv);
         xns_gc_unregister(fn->vm, &fn);
         xns_gc_unregister(fn->vm, &env);
         xns_gc_unregister(fn->vm, &args);
@@ -110,7 +110,7 @@ struct xns_object *apply(struct xns_object *fn, struct xns_object *env, struct x
         // hopefully this works ...
         xns_gc_register(fn->vm, &fn);
         xns_gc_register(fn->vm, &args);
-        struct xns_object *ret = eval(macroexpand(fn, env, args), env);
+        xns_obj ret = eval(macroexpand(fn, env, args), env);
         xns_gc_unregister(fn->vm, &fn);
         xns_gc_unregister(fn->vm, &args);
         return ret;

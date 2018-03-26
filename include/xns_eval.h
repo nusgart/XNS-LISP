@@ -19,8 +19,8 @@
 #define XNS_EVAL_H
 /// the evalulator
 #include "xns_common.h"
-struct xns_object *macroexpand(struct xns_object *mcro, struct xns_object *env, struct xns_object *args);
-struct xns_object *eval(struct xns_object *obj, struct xns_object *env);
-struct xns_object *evlis(struct xns_object *obj, struct xns_object *env);
-struct xns_object *apply(struct xns_object *obj, struct xns_object *env, struct xns_object *args);
+xns_object *macroexpand(xns_obj mcro, xns_obj env, xns_obj args);
+xns_object *eval(xns_obj obj, xns_obj env);
+xns_object *evlis(xns_obj obj, xns_obj env);
+xns_object *apply(xns_obj obj, xns_obj env, xns_obj args);
 #endif //XNS_EVAL_H

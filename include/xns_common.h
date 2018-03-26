@@ -27,8 +27,7 @@
 #include <assert.h>
 
 typedef struct xns_object xns_object;
-typedef volatile struct xns_object *xns_obj;
+typedef struct xns_object *volatile xns_obj;
 typedef struct xns_vm xns_vm;
-typedef struct xns_object *(*xns_primitive)(struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-
+typedef struct xns_object *(*xns_primitive)(struct xns_vm *vm, xns_obj env, xns_obj obj); 
 #endif //XNS_COMMON_H

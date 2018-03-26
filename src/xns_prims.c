@@ -20,9 +20,9 @@
 #include "xns_lisp.h"
 
 static void rp(struct xns_vm *vm, char *name, xns_primitive op){
-    xns_object *obj = xns_make_primitive(vm, op);
+    xns_obj obj = xns_make_primitive(vm, op);
     xns_gc_register(vm, &obj);
-    xns_object *n = xns_intern(vm, name);
+    xns_obj n = xns_intern(vm, name);
     xns_set(vm->env, n, obj);
     xns_gc_unregister(vm, &obj);
 }
@@ -36,20 +36,20 @@ void xns_register_primops(struct xns_vm *vm){
 #define U(a) xns_gc_unregister(vm, &a)
 
 
-xns_object *xns_prim_exit(struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
-    // exit
+xns_object *xns_prim_exit(struct xns_vm *vm, xns_obj env, xns_obj args){
+    (void)vm; (void)env; (void)args;
     exit(0);
 }
 //symbols and gensyms
-xns_object *xns_prim_eq     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_eq     (struct xns_vm *vm, xns_obj env, xns_obj args){
    if(xns_len(args) != 2){
        // TODO ERROR
        return vm->NIL;
    }
    R(env);
-   struct xns_object *obj = eval(args->car, env);
+   xns_obj obj = eval(args->car, env);
    R(obj);
-   struct xns_object *other=eval(args->cdr->car, env);
+   xns_obj other=eval(args->cdr->car, env);
    if (xns_eq(obj, other)) {
        U(obj);
        U(env);
@@ -59,8 +59,8 @@ xns_object *xns_prim_eq     (struct xns_vm *vm, struct xns_object *env, struct x
    U(env);
    return vm->NIL;
 }
-xns_object *xns_prim_null   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
-    struct xns_object *res = eval(args->car, env);
+xns_object *xns_prim_null   (struct xns_vm *vm, xns_obj env, xns_obj args){
+    xns_obj res = eval(args->car, env);
     if (xns_nil(res)) {
         res = vm->T;
     } else {
@@ -68,15 +68,16 @@ xns_object *xns_prim_null   (struct xns_vm *vm, struct xns_object *env, struct x
     }
     return res;
 }
-xns_object *xns_prim_quote    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_quote    (struct xns_vm *vm, xns_obj env, xns_obj args){
+    (void) vm; (void) env;
     return args->car;
 }
 // environment
-xns_object *xns_prim_set    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    xns_object *val = eval(args->cdr->car, env);
-    xns_object *sym = args->car;
+    xns_obj val = eval(args->cdr->car, env);
+    xns_obj sym = args->car;
     R(sym);
     R(val);
     xns_set(env, sym, val);
@@ -87,10 +88,10 @@ xns_object *xns_prim_set    (struct xns_vm *vm, struct xns_object *env, struct x
     return val;
 }
 
-xns_object *xns_prim_define (struct xns_vm *vm, xns_object *env, xns_object *args){
+xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(args);
-    xns_object *val = eval(args->cdr->car, env);
-    xns_object *sym = args->car;
+    xns_obj val = eval(args->cdr->car, env);
+    xns_obj sym = args->car;
     R(val);
     xns_set(vm->env, sym, val);
     U(val);
@@ -98,13 +99,13 @@ xns_object *xns_prim_define (struct xns_vm *vm, xns_object *env, xns_object *arg
     return val;
 }
 
-xns_object *xns_prim_assoc  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    xns_object *key = eval(args->car, env);
+    xns_obj key = eval(args->car, env);
     R(key);
-    xns_object *list = eval(args->cdr->car, env);
-    xns_object *rtn = vm->NIL;
+    xns_obj list = eval(args->cdr->car, env);
+    xns_obj rtn = vm->NIL;
     while(!xns_nil(list)){
         if (xns_eq(key, list->car->car)){
             rtn = list->car;
@@ -117,39 +118,40 @@ xns_object *xns_prim_assoc  (struct xns_vm *vm, struct xns_object *env, struct x
     U(env);
     return rtn;
 }
-xns_object *xns_prim_eval   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_eval   (struct xns_vm *vm, xns_obj env, xns_obj args){
+    (void)vm;
     return eval(args, env);
 }
-xns_object *xns_prim_apply   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_apply   (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    xns_object *fn = eval(args->car, env);
-    xns_object *ret = apply(fn, env, args->cdr);
+    xns_obj fn = eval(args->car, env);
+    xns_obj ret = apply(fn, env, args->cdr);
     U(env);
     U(args);
     return ret;
 }
 // control
-xns_object *xns_prim_let    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_let    (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    xns_object *newenv = xns_make_env(vm, env);
+    xns_obj newenv = xns_make_env(vm, env);
     R(newenv);
-    xns_object *vpairs = args->car;
+    xns_obj vpairs = args->car;
     R(vpairs);
-    xns_object *code = args->cdr;
+    xns_obj code = args->cdr;
     R(code);
     // parse vpairs
     while(!xns_nil(vpairs)){
-        xns_object *o = vpairs->car;
+        xns_obj o = vpairs->car;
         R(o);
-        xns_object *val = eval(o->cdr->car, env);
+        xns_obj val = eval(o->cdr->car, env);
         xns_set(newenv, o->car, val);
         U(o);
         vpairs = vpairs->cdr;
     }
     // run code
-    xns_object *ret = vm->NIL;
+    xns_obj ret = vm->NIL;
     R(ret);
     while(!xns_nil(code)){
         ret = eval(code->car, newenv);
@@ -163,11 +165,11 @@ xns_object *xns_prim_let    (struct xns_vm *vm, struct xns_object *env, struct x
     U(env);
     return ret;
 }
-xns_object *xns_prim_cond   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_cond   (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(args);
     R(env);
     while(!xns_nil(args)){
-        xns_object *a = eval(args->car->car, env);
+        xns_obj a = eval(args->car->car, env);
         if(!xns_nil(a)){
             U(env);
             U(args);
@@ -180,30 +182,30 @@ xns_object *xns_prim_cond   (struct xns_vm *vm, struct xns_object *env, struct x
     return vm->NIL;
 }
 
-xns_object *xns_prim_lambda (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_lambda (struct xns_vm *vm, xns_obj env, xns_obj args){
     return xns_make_function(vm, args->car, args->cdr, env);
 }
 
-xns_object *xns_prim_labels  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_labels  (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    xns_object *newenv = xns_make_env(vm, env);
+    xns_obj newenv = xns_make_env(vm, env);
     R(newenv);
-    xns_object *vpairs = args->car;
+    xns_obj vpairs = args->car;
     R(vpairs);
-    xns_object *code = args->cdr;
+    xns_obj code = args->cdr;
     R(code);
     // parse vpairs
     while(!xns_nil(vpairs)){
-        xns_object *o = vpairs->car;
+        xns_obj o = vpairs->car;
         R(o);
-        xns_object *val = eval(o->cdr->car, newenv);
+        xns_obj val = eval(o->cdr->car, newenv);
         xns_set(newenv, o->car, val);
         U(o);
         vpairs = vpairs->cdr;
     }
     // run code
-    xns_object *ret = vm->NIL;
+    xns_obj ret = vm->NIL;
     R(ret);
     while(!xns_nil(code)){
         ret = eval(code->car, newenv);
@@ -218,59 +220,61 @@ xns_object *xns_prim_labels  (struct xns_vm *vm, struct xns_object *env, struct 
     return ret;
 }
 // Cons Cells
-xns_object *xns_prim_car    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_car    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(!xns_nil(args->cdr)){
         // TODO ERROR
     }
+    (void) vm;
     return eval(args->car, env)->car;
 }
-xns_object *xns_prim_cdr    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(!xns_nil(args->cdr)){
         // TODO ERROR
     }
+    (void) vm;
     return eval(args->car, env)->car;
 }
-xns_object *xns_prim_cons   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_cons   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(xns_len(args) != 2){
         // TODO ERROR
     }
     R(env);
     R(args);
-    xns_object *first = eval(args->car, env);
+    xns_obj first = eval(args->car, env);
     R(first);
-    xns_object *second = eval(args->cdr->car, env);
+    xns_obj second = eval(args->cdr->car, env);
     return xns_cons(vm, first, second);
 }
-xns_object *xns_prim_pair   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_pair   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
         // TODO ERROR
         return vm->NIL;
     }
     R(env);
     R(args);
-    struct xns_object *first = eval(args->car, env);
+    xns_obj first = eval(args->car, env);
     R(first);
-    struct xns_object *second = eval(args->cdr->car, env);
+    xns_obj second = eval(args->cdr->car, env);
     R(second);
-    xns_object *p = xns_pair(first, second);
+    xns_obj p = xns_pair(first, second);
     U(env);
     U(args);
     U(first);
     U(second);
     return p;
 }
-xns_object *xns_prim_append (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_append (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
         // TODO ERROR
         return vm->NIL;
     }
     R(env);
     R(args);
-    struct xns_object *first = eval(args->car, env);
+    xns_obj first = eval(args->car, env);
     R(first);
-    struct xns_object *second = eval(args->cdr->car, env);
+    xns_obj second = eval(args->cdr->car, env);
     R(second);
-    xns_object *p = xns_append(first, second);
+    xns_obj p = xns_append(first, second);
     U(env);
     U(args);
     U(first);
@@ -278,12 +282,12 @@ xns_object *xns_prim_append (struct xns_vm *vm, struct xns_object *env, struct x
     return p;
 }
 //Predicates
-xns_object *xns_prim_atom   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_atom   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (!xns_nil(args->cdr)){
         // TODO ERROR
         return vm->NIL;
     }
-    struct xns_object *o = eval(args->car, env);
+    xns_obj o = eval(args->car, env);
     while(o->type == XNS_HANDLE){
         o = o->ptr;
     }
@@ -292,10 +296,10 @@ xns_object *xns_prim_atom   (struct xns_vm *vm, struct xns_object *env, struct x
     }
     return vm->NIL;
 }
-xns_object *xns_prim_and    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_and    (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    struct xns_object *o = vm->NIL;
+    xns_obj o = vm->NIL;
     while(!xns_nil(args)){
         o = eval(args->car, env);
         if(xns_nil(o)){
@@ -309,10 +313,10 @@ xns_object *xns_prim_and    (struct xns_vm *vm, struct xns_object *env, struct x
     U(args);
     return o;
 }
-xns_object *xns_prim_or     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_or     (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
-    struct xns_object *o = vm->NIL;
+    xns_obj o = vm->NIL;
     while(!xns_nil(args)){
         o = eval(args->car, env);
         if(!xns_nil(o)){
@@ -326,12 +330,12 @@ xns_object *xns_prim_or     (struct xns_vm *vm, struct xns_object *env, struct x
     U(args);
     return vm->NIL;
 }
-xns_object *xns_prim_not    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_not    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){
         // TODO ERROR
         return vm->NIL;
     }
-    struct xns_object *expr = eval(args->car, env);
+    xns_obj expr = eval(args->car, env);
     if(xns_nil(expr)){
         return vm->T;
     }
@@ -340,7 +344,7 @@ xns_object *xns_prim_not    (struct xns_vm *vm, struct xns_object *env, struct x
 
 //numbers
 /// arith ops
-xns_object *xns_prim_plus   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
     xns_obj ns = evlis(args, env);
@@ -400,7 +404,7 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, struct xns_object *env, struct x
     U(env);
     return ret;
 }
-xns_object *xns_prim_minus  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_minus  (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
     xns_obj ns = evlis(args, env);
@@ -464,7 +468,7 @@ xns_object *xns_prim_minus  (struct xns_vm *vm, struct xns_object *env, struct x
     U(env);
     return ret;
 }
-xns_object *xns_prim_mult   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_mult   (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
     xns_obj ns = evlis(args, env);
@@ -524,7 +528,7 @@ xns_object *xns_prim_mult   (struct xns_vm *vm, struct xns_object *env, struct x
     U(env);
     return ret;
 }
-xns_object *xns_prim_divide (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
     xns_obj ns = evlis(args, env);

@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include "xns_lisp.h"
 
-char *xns_to_string(struct xns_object *object){
+char *xns_to_string(xns_obj object){
     //TODO finish implementing
     char *desc, *fmt, *res;
     int as_len=0;
@@ -70,7 +70,7 @@ char *xns_to_string(struct xns_object *object){
             #else
             case XNS_CONS:
             desc = strdup("(");
-            xns_object *obj = object;
+           xns_obj obj = object;
             size_t len = 0;
             while(true){
                 char *o = desc;
@@ -123,13 +123,13 @@ char *xns_to_string(struct xns_object *object){
     }
     return NULL;
 }
-void  xns_print_object(struct xns_object *object){
+void  xns_print_object(xns_obj object){
     char *a = xns_to_string(object);
     printf("%s\n",a);
     free(a);
 }
 static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
-    struct xns_object *list=NULL, *car=NULL, *cdr=NULL;
+    xns_obj list=NULL, car=NULL, cdr=NULL;
     xns_gc_register(vm, &car);
     xns_gc_register(vm, &cdr);
     xns_gc_register(vm, &list);
@@ -150,7 +150,7 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
             if(! xns_eq(xns_read_file(vm, fp), vm->Rparen)){
                 // TODO error
             }
-            struct xns_object *end = list;
+            xns_obj end = list;
             list = xns_nreverse(list);
             end->cdr = cdr;
             break;
@@ -163,9 +163,9 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
     return list;
 }
 // read an object from memory -- TODO implement these
-struct xns_object *xns_read_memory(struct xns_vm *vm,char *memory, size_t length){
+xns_object *xns_read_memory(struct xns_vm *vm,char *memory, size_t length){
     FILE *file = fmemopen(memory, length, "r");
-    struct xns_object *obj = xns_read_file(vm, file);
+    xns_obj obj = xns_read_file(vm, file);
     fclose(file);
     return obj;
 }
@@ -177,9 +177,9 @@ static int look(FILE*fp){
 
 static const char symbol_chars[] = "~!@#$%^&*-_=+:/?<>";
 
-struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
+xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
     // TODO
-    struct xns_object *obj=NULL;
+    xns_obj obj=NULL;
     char *buffer = NULL;
     size_t currsize = 256;
     size_t idx = 0;
@@ -281,8 +281,8 @@ struct xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
 }
 
 // read a whole file
-struct xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp){
-    struct xns_object *obj=NULL;
+xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp){
+    xns_obj obj=NULL;
     while(!feof(fp)){
         obj = xns_read_file(vm, fp);
     }
@@ -290,9 +290,9 @@ struct xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp){
 }
 
 // read a whole buffer
-struct xns_object *xns_read_whole_buffer(struct xns_vm *vm, void *memory, size_t length){
+xns_object *xns_read_whole_buffer(struct xns_vm *vm, void *memory, size_t length){
     FILE *file = fmemopen(memory, length, "r");
-    struct xns_object *obj = xns_read_whole_file(vm, file);
+    xns_obj obj = xns_read_whole_file(vm, file);
     fclose(file);
     return obj;
 }

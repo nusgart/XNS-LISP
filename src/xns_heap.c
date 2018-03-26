@@ -21,7 +21,7 @@ static inline size_t roundup(size_t var, size_t size) {
 }
 
 // allocates space for an XNS-Object
-struct xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size){
+xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size){
     printf("---------------------------------------------\n");
     printf("Originally requested %lu bytes\n", size);
     size = roundup(size, sizeof(void*));
@@ -38,7 +38,7 @@ struct xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_
         // this actually gives us more free space
         xns_vm_gc(vm, 2 * vm->heap.used);
     }
-    struct xns_object *obj = (struct xns_object*)(vm->heap.current_heap+vm->heap.used);
+    xns_obj obj = (struct xns_object*)(vm->heap.current_heap+vm->heap.used);
     obj->size = size;
     obj->type = type;
     obj->object_id = vm->current_objectID++;
@@ -50,7 +50,7 @@ struct xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_
 }
 
 // move an xns_object to the new heap
-static struct xns_object *_xns_forward(struct xns_vm *vm, struct xns_object *obj){
+static struct xns_object *_xns_forward(struct xns_vm *vm, xns_obj obj){
     if(!obj){
         printf("Not forwarding null pointer\n");
         return NULL;
@@ -70,7 +70,7 @@ static struct xns_object *_xns_forward(struct xns_vm *vm, struct xns_object *obj
     }
     printf("Forwarding object %u of type %d size %lu\n", obj->object_id, obj->type, obj->size);
     // otherwise, move the object to the new heap
-    struct xns_object *nw = vm->scan2;
+    xns_obj nw = vm->scan2;
     memcpy(nw, obj, obj->size);
     vm->scan2 = (struct xns_object*)((uint8_t*)vm->scan2 + obj->size);
     ptrdiff_t d2 = (uint8_t*)vm->scan2 - (uint8_t*) vm->heap.current_heap;
@@ -186,8 +186,8 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
 }
 
 // gives out an xns_handle -- this is an object that normal C code can handle
-xns_object *xns_get_handle(struct xns_vm *vm, struct xns_object *obj){
-    xns_object *o = calloc(1, sizeof(xns_object));
+xns_object *xns_get_handle(struct xns_vm *vm, xns_obj obj){
+    xns_obj o = calloc(1, sizeof(xns_object));
     o->vm = vm;
     o->type = XNS_HANDLE;
     o->size = sizeof(xns_object);
@@ -198,7 +198,7 @@ xns_object *xns_get_handle(struct xns_vm *vm, struct xns_object *obj){
 }
 // destroy a handle -- until handles are destroyed, the object they point
 // to can not be garbage collected
-void xns_destroy_handle(struct xns_vm *vm, struct xns_object *handle){
+void xns_destroy_handle(struct xns_vm *vm, xns_obj handle){
     xns_gc_unregister(vm, &handle->ptr);
     handle->foreign_pointer = NULL;
     handle->vm = NULL;
@@ -207,8 +207,8 @@ void xns_destroy_handle(struct xns_vm *vm, struct xns_object *handle){
 
 /// massive hack do not use
 void xns_print_heap(struct xns_vm *vm){
-    xns_object *ptr = vm->heap.current_heap;
-    xns_object *end = (struct xns_object*)((uint8_t*)ptr+vm->heap.used);
+    xns_obj ptr = vm->heap.current_heap;
+    xns_obj end = (struct xns_object*)((uint8_t*)ptr+vm->heap.used);
     while(ptr < end){
         ptrdiff_t offset = (uint8_t*)ptr - (uint8_t*)vm->heap.current_heap;
         if(offset + ptr->size > vm->heap.used) break;

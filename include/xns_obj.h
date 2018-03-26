@@ -76,8 +76,8 @@ struct xns_object{
   union{
     // cons cell
     struct{
-        struct xns_object *car;
-        struct xns_object *cdr;
+        xns_obj car;
+        xns_obj cdr;
     };
     // symbol -- 
     struct{
@@ -90,14 +90,14 @@ struct xns_object{
     long fixnum;
     // function / macro
     struct{
-        struct xns_object *args;
-        struct xns_object *body;
-        struct xns_object *env;
+        xns_obj args;
+        xns_obj body;
+        xns_obj env;
     };
     // environment frame
     struct{
-        struct xns_object *vars;
-        struct xns_object *parent;
+        xns_obj vars;
+        xns_obj parent;
     };
     // integer -- unimplemented -- will change
     void *integer_implementation;
@@ -112,12 +112,12 @@ struct xns_object{
     void *rational_implementation;
     // foreign function pointer -- unimplemented but this probably won't change
     struct{
-        struct xns_object *(*foreign_fcn)(struct xns_object *args, struct xns_object *env);
+        struct xns_object *(*foreign_fcn)(xns_obj args, xns_obj env);
         // will somehow hold the signature for type safety??
-        struct xns_object *signature; 
+        xns_obj signature; 
     };
     // handle or moved
-    xns_object *ptr;
+    xns_obj ptr;
     // foreign pointer -- unimplemented but final
     void *foreign_pointer;
   };
@@ -126,8 +126,8 @@ struct xns_object{
 // allocates space for an XNS-Object
 xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size);
 // gives out an xns_handle -- this is an object that normal C code can handle
-xns_object *xns_get_handle(struct xns_vm *vm, struct xns_object *obj);
+xns_object *xns_get_handle(struct xns_vm *vm, xns_obj obj);
 // destroy a handle -- until handles are destroyed
-void xns_destroy_handle(struct xns_vm *vm, struct xns_object *handle);
+void xns_destroy_handle(struct xns_vm *vm, xns_obj handle);
 
 #endif //XNS_OBJ_H

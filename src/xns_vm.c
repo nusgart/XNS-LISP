@@ -131,7 +131,7 @@ static void deleteframe(struct xns_vm *vm, struct xns_gcframe *frame){
 //// If you don't understand this please just use the handle api
 /// CURRENTLY ORDER 2 * number of frames * frame_size = 2046 * nframes
 // register a local variable -- this is primarily for internal purposes
-void xns_gc_register(struct xns_vm *vm, struct xns_object *const*ptr){
+void xns_gc_register(struct xns_vm *vm, xns_obj const*ptr){
     struct xns_gcframe *curr = vm->firstframe;
     if(!vm->frame){
         curr = makeframe(vm);
@@ -162,7 +162,7 @@ void xns_gc_register(struct xns_vm *vm, struct xns_object *const*ptr){
     curr->counts[0] = 1;
 }
 // unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
-void xns_gc_unregister(struct xns_vm *vm, struct xns_object *const*ptr){
+void xns_gc_unregister(struct xns_vm *vm, xns_obj const*ptr){
     if(!vm->frame) return;
     struct xns_gcframe *curr = vm->firstframe; 
     // try to find the pointer

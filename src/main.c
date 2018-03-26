@@ -18,11 +18,11 @@
 #define NOBJ 8//1024
 int main(int argc, char**argv){
     struct xns_vm *vm = xns_create_vm(128);
-    assert(vm);
+    assert(vm); (void) argc; (void) argv;
     printf("Created VM.\n");
-    xns_object *objects[NOBJ+1];
-    xns_object *orig[NOBJ+1];
-    memset(objects, 0, sizeof(objects));
+    xns_obj objects[NOBJ+1];
+    xns_obj orig[NOBJ+1];
+    memset((void*)objects, 0, sizeof(objects));
     for(int i = 0; i < NOBJ+1; i++){
         xns_gc_register(vm, &objects[i]);
     }
@@ -48,25 +48,25 @@ int main(int argc, char**argv){
     xns_vm_gc(vm, vm->heap.size);
     printf("Objects[NOBJ] is type=%d size=%lu value=%ld", objects[NOBJ]->type, objects[NOBJ]->size, objects[NOBJ]->fixnum);
     printf("VM NIL is %s %lu\n", vm->NIL->symname, vm->NIL->symid);
-    xns_object *aa = xns_intern(vm, "NIL");
+    xns_obj aa = xns_intern(vm, "NIL");
     printf("Symbols NIL is %s %lu\n", aa->symname, aa->symid);
-    xns_object *sym = xns_intern(vm, "foo");
+    xns_obj sym = xns_intern(vm, "foo");
     printf("Created symbol foo\n");
     xns_gc_register(vm,  &sym);
     xns_set(vm->env, sym, objects[NOBJ - 3]);
     printf("Associated value\n");
-    xns_object *o = xns_assoc(vm->env, sym);
+    xns_obj o = xns_assoc(vm->env, sym);
     printf("Found object %u (type=%d size=%lu fixnum=%ld) for symbol %s\n", o->object_id, o->type, o->size, o->fixnum, sym->symname);
     // clear out objects so that the GC can clean up
     for(int i = 0 ; i < NOBJ+1; i++){
         xns_gc_unregister(vm, &objects[i]);
     }
-    memset(objects, 0, sizeof(objects));
+    memset((void*)objects, 0, sizeof(objects));
     // RPL -- READ PRINT LOOP (It's only missing EVAL!)
     while(!feof(stdin)){
-        struct xns_object *rdobj = xns_read_file(vm, stdin);
+        xns_obj rdobj = xns_read_file(vm, stdin);
         xns_gc_register(vm, &rdobj);
-        struct xns_object *ev = eval(rdobj, vm->env);
+        xns_obj ev = eval(rdobj, vm->env);
         xns_print_object(rdobj);
         xns_print_object(ev);
     }

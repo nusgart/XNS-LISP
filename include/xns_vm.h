@@ -29,7 +29,7 @@
  * mess with GC frames directly, just use the registration API.
  */ 
 struct xns_gcframe{
-    struct xns_object **ptrs[XNS_GCFRAME_SIZE];
+    xns_obj *ptrs[XNS_GCFRAME_SIZE];
     size_t counts[XNS_GCFRAME_SIZE];
     struct xns_gcframe *prev, *next;
 };
@@ -42,18 +42,18 @@ struct xns_vm{
     size_t current_symbol;
     size_t current_objectID;
     // the list of symbols
-    struct xns_object *symbols;
+    xns_obj symbols;
     ////Environment
-    struct xns_object *env;
+    xns_obj env;
     //// Global symbols
-    struct xns_object *NIL;
-    struct xns_object *T;
-    struct xns_object *Dot;
-    struct xns_object *Rparen;
-    struct xns_object *Quote;
+    xns_obj NIL;
+    xns_obj T;
+    xns_obj Dot;
+    xns_obj Rparen;
+    xns_obj Quote;
     //// gc info
-    struct xns_object *scan1;
-    struct xns_object *scan2;
+    xns_obj scan1;
+    xns_obj scan2;
     // stores the root pointers
     struct xns_gcframe *frame, *firstframe;
     //// heap data
@@ -102,9 +102,9 @@ void xns_vm_gc(struct xns_vm *vm, size_t heapsize);
  * function to initialize *ptr (even though the type of ptr disallows that) and
  * thus does not issue any warning!
  */
-void xns_gc_register(struct xns_vm *vm, struct xns_object *const*ptr);
+void xns_gc_register(struct xns_vm *vm, xns_obj const*ptr);
 /**
  * Unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
  */
-void xns_gc_unregister(struct xns_vm *vm, struct xns_object *const*ptr);
+void xns_gc_unregister(struct xns_vm *vm, xns_obj const*ptr);
 #endif //XNS_VM_H

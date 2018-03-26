@@ -22,7 +22,7 @@
  * said name, or creates a new symbol with the given name.
  */
 xns_object *xns_intern(xns_vm *vm, const char *name){
-    struct xns_object *p = vm->symbols;
+    xns_obj p = vm->symbols;
     while(p && p != vm->NIL){
         if(!strcmp(p->car->symname, name)){
             return p->car;
@@ -30,7 +30,7 @@ xns_object *xns_intern(xns_vm *vm, const char *name){
         p = p->cdr;
     }
     size_t size = strlen(name) + 1 + sizeof(size_t);
-    struct xns_object *obj = xns_alloc_object(vm, XNS_SYMBOL, size);
+    xns_obj obj = xns_alloc_object(vm, XNS_SYMBOL, size);
     obj->symid = vm->current_symbol++;
     strcpy(obj->symname, name);
     printf("Added symbol %s with symid %lu objid %u\n", obj->symname, obj->symid, obj->object_id);
@@ -43,7 +43,7 @@ xns_object *xns_intern(xns_vm *vm, const char *name){
 //    symbol, even the SAME SYMBOL READ IN ANOTHER TIME: (EQ '#:G191 #:G191) evaluates to NIL!
 xns_object *xns_gensym(xns_vm *vm){
     char gs[] = "#:G1234567890";
-    struct xns_object *obj = xns_alloc_object(vm, XNS_GENSYM, sizeof(gs) + sizeof(size_t));
+    xns_obj obj = xns_alloc_object(vm, XNS_GENSYM, sizeof(gs) + sizeof(size_t));
     char *gsym = obj->symname;
     obj->symid = vm->current_symbol++;
     snprintf(gsym, sizeof(gs), "#:G%lu", obj->symid);
@@ -53,7 +53,7 @@ xns_object *xns_gensym(xns_vm *vm){
     return obj;
 }
 // are 
-bool xns_eq(xns_object *a, xns_object *b){
+bool xns_eq(xns_obj a, xns_obj b){
     if(!a || !b) return !a && !b;
     if(a == b) return true;
     if(a->type != XNS_SYMBOL && a->type != XNS_GENSYM) return false;
@@ -61,13 +61,13 @@ bool xns_eq(xns_object *a, xns_object *b){
     return a==b || (a->vm == b->vm && a->symid == b->symid);
 }
 // is obj nill? (Nill is the Lisp equivalent of NULL -- it is the empty list, false, and also a symbol)
-bool xns_nil(xns_object *obj){
+bool xns_nil(xns_obj obj){
     return !obj || obj == obj->vm->NIL;
 }
 // environment
-struct xns_object *xns_make_env(xns_vm *vm, xns_object *parent){
+xns_object *xns_make_env(xns_vm *vm, xns_obj parent){
     xns_gc_register(vm, &parent);
-    struct xns_object *obj = xns_alloc_object(vm, XNS_ENV, 2 * sizeof(xns_object *));
+    xns_obj obj = xns_alloc_object(vm, XNS_ENV, 2 * sizeof(xns_obj ));
     printf("ENV Object %d has size %lu\n", obj->object_id, obj->size);
     obj->parent = parent? parent: vm->NIL;
     obj->vars = vm->NIL;
@@ -77,8 +77,8 @@ struct xns_object *xns_make_env(xns_vm *vm, xns_object *parent){
 /*
   An environment is implemented as an association list of symbols to values
  */
-struct xns_object *xns_assoc(xns_object *env, xns_object *sym){
-    struct xns_object *curr = env->vars;
+xns_object *xns_assoc(xns_obj env, xns_obj sym){
+    xns_obj curr = env->vars;
     while(curr && curr != env->vm->NIL){
         assert(curr->type == XNS_CONS);
         if(xns_eq(curr->car->car, sym)){
@@ -91,11 +91,11 @@ struct xns_object *xns_assoc(xns_object *env, xns_object *sym){
     }
     return xns_assoc(env->parent, sym);
 }
-struct xns_object *xns_set(xns_object *env, xns_object *sym, xns_object *value){
+xns_object *xns_set(xns_obj env, xns_obj sym, xns_obj value){
     xns_gc_register(env->vm, &env);
     xns_gc_register(env->vm, &sym);
     xns_gc_register(env->vm, &value);
-    struct xns_object *pair = xns_cons(env->vm, sym, value);
+    xns_obj pair = xns_cons(env->vm, sym, value);
     xns_gc_register(env->vm, &pair);
     env->vars = xns_cons(env->vm, pair, env->vars);
     xns_gc_unregister(env->vm, &pair);
@@ -105,7 +105,7 @@ struct xns_object *xns_set(xns_object *env, xns_object *sym, xns_object *value){
     return value;
 }
 // Cons Cells
-xns_object *xns_car(xns_object *obj){
+xns_object *xns_car(xns_obj obj){
     if(!obj) return NULL;
     if(obj->type != XNS_CONS){
         if(obj == obj->vm->NIL){
@@ -116,7 +116,7 @@ xns_object *xns_car(xns_object *obj){
     }
     return obj->car;
 }
-struct xns_object *xns_cdr(xns_object *obj){
+xns_object *xns_cdr(xns_obj obj){
     if(!obj) return NULL;
     if(obj->type != XNS_CONS){
         if(obj == obj->vm->NIL){
@@ -127,20 +127,20 @@ struct xns_object *xns_cdr(xns_object *obj){
     }
     return obj->cdr;
 }
-struct xns_object *xns_cons(xns_vm *vm, xns_object *car, xns_object *cdr){
+xns_object *xns_cons(xns_vm *vm, xns_obj car, xns_obj cdr){
     xns_gc_register(vm, &car);
     xns_gc_register(vm, &cdr);
-    xns_object *obj = xns_alloc_object(vm, XNS_CONS, 2 * sizeof(xns_object *));
+    xns_obj obj = xns_alloc_object(vm, XNS_CONS, 2 * sizeof(xns_obj ));
     obj->car = car;
     obj->cdr = cdr;
     xns_gc_unregister(vm, &car);
     xns_gc_unregister(vm, &cdr);
     return obj;
 }
-struct xns_object *xns_nreverse(struct xns_object *list){
-    struct xns_object *obj = list->vm->NIL;
+xns_object *xns_nreverse(xns_obj list){
+    xns_obj obj = list->vm->NIL;
     while(!xns_nil(list)){
-        struct xns_object *hd = list;
+        xns_obj hd = list;
         list = list->cdr;
         hd->cdr = obj;
         obj = hd;
@@ -148,10 +148,10 @@ struct xns_object *xns_nreverse(struct xns_object *list){
     return obj;
 }
 
-struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
+xns_object *xns_pair(xns_obj x, xns_obj y){
     xns_gc_register(x->vm, &x);
     xns_gc_register(x->vm, &y);
-    struct xns_object *prs = x->vm->NIL;
+    xns_obj prs = x->vm->NIL;
     xns_gc_register(x->vm, &prs);
     while(!xns_nil(x) && !xns_nil(y)){
         prs = xns_cons(x->vm, xns_cons(x->vm, x->car,y->car), prs);
@@ -164,17 +164,17 @@ struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
     return prs;
 }
 
-struct xns_object *xns_append(struct xns_object *x, struct xns_object *y){
+xns_object *xns_append(xns_obj x, xns_obj y){
     if(xns_nil(x)) return y;
     xns_gc_register(x->vm, &x);
     xns_gc_register(x->vm, &y);
-    xns_object *o = xns_cons(x->vm, x->car, xns_append(x->cdr, y));
+    xns_obj o = xns_cons(x->vm, x->car, xns_append(x->cdr, y));
     xns_gc_unregister(x->vm, &y);
     xns_gc_unregister(x->vm, &x);
     return o;
 }
 
-size_t xns_len(struct xns_object *list){
+size_t xns_len(xns_obj list){
     // hopefully this will prevent problems
     if (list->type != XNS_CONS) return 0;
     size_t len = 0;
@@ -185,33 +185,33 @@ size_t xns_len(struct xns_object *list){
     return len;
 }
 
-struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
-    struct xns_object *obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
+xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
+    xns_obj obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
     obj->fixnum = value;
     return obj;
 }
-struct xns_object *xns_make_double(struct xns_vm *vm, double value){
-    struct xns_object *obj = xns_alloc_object(vm, XNS_DOUBLE, sizeof(double));
+xns_object *xns_make_double(struct xns_vm *vm, double value){
+    xns_obj obj = xns_alloc_object(vm, XNS_DOUBLE, sizeof(double));
     obj->dval = value;
     return obj;
 }
-struct xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value){
-    struct xns_object *obj = xns_alloc_object(vm, XNS_PRIMITIVE, sizeof(xns_primitive));
+xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value){
+    xns_obj obj = xns_alloc_object(vm, XNS_PRIMITIVE, sizeof(xns_primitive));
     obj->primitive = value;
     return obj;
 }
-struct xns_object *xns_make_string(struct xns_vm *vm, char *value){
+xns_object *xns_make_string(struct xns_vm *vm, char *value){
     size_t len = strlen(value) + 1;
-    struct xns_object *obj = xns_alloc_object(vm, XNS_STRING, len);
+    xns_obj obj = xns_alloc_object(vm, XNS_STRING, len);
     strncpy(obj->string, value, len);
     obj->string[len-1] = 0; 
     return obj;
 }
-struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env){
+xns_object *xns_make_function(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){
     xns_gc_register(vm, &params);
     xns_gc_register(vm, &body);
     xns_gc_register(vm, &env);
-    struct xns_object *obj = xns_alloc_object(vm, XNS_FUNCTION, 3 * sizeof(struct xns_object*));
+    xns_obj obj = xns_alloc_object(vm, XNS_FUNCTION, 3 * sizeof(struct xns_object*));
     obj->args = params;
     obj->body = body;
     obj->env = env;
@@ -220,11 +220,11 @@ struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *param
     xns_gc_unregister(vm, &env);
     return obj;
 }
-struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env){
+xns_object *xns_make_macro(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){
     xns_gc_register(vm, &params);
     xns_gc_register(vm, &body);
     xns_gc_register(vm, &env);
-    struct xns_object *obj = xns_alloc_object(vm, XNS_MACRO, 3 * sizeof(struct xns_object*));
+    xns_obj obj = xns_alloc_object(vm, XNS_MACRO, 3 * sizeof(struct xns_object*));
     obj->args = params;
     obj->body = body;
     obj->env = env;
@@ -236,16 +236,18 @@ struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, 
 
 
 /// CONVERSION
-struct xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value){
+xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value){
+    (void) value;
     return vm->NIL; // TODO IMPLEMENT
     /*switch(value->type){
         case XNS_FIXNUM:
     }*/
 }
-struct xns_object *xns_to_real(struct xns_vm *vm, xns_obj value){
+xns_object *xns_to_real(struct xns_vm *vm, xns_obj value){
+    (void) value;
     return vm->NIL;// TODO IMPLEMENT
 }
-struct xns_object *xns_to_double(struct xns_vm *vm, xns_obj value){
+xns_object *xns_to_double(struct xns_vm *vm, xns_obj value){
     switch (value->type){
         default:
             return vm->NIL;
