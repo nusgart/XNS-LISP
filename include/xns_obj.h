@@ -112,7 +112,7 @@ struct xns_object{
     void *rational_implementation;
     // foreign function pointer -- unimplemented but this probably won't change
     struct{
-        void *(*foreign_fcn)();
+        struct xns_object *(*foreign_fcn)(struct xns_object *args, struct xns_object *env);
         // will somehow hold the signature for type safety??
         struct xns_object *signature; 
     };

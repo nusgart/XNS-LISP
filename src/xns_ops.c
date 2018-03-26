@@ -148,6 +148,22 @@ struct xns_object *xns_nreverse(struct xns_object *list){
     return obj;
 }
 
+struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
+    xns_gc_register(x->vm, &x);
+    xns_gc_register(x->vm, &y);
+    struct xns_object *prs = x->vm->NIL;
+    xns_gc_register(x->vm, &prs);
+    while(!xns_nil(x) && !xns_nil(y)){
+        prs = xns_cons(x->vm, xns_cons(x->vm, x,y), prs);
+        x = x->cdr;
+        y = y->cdr;
+    }
+    xns_gc_unregister(x->vm, &prs);
+    xns_gc_unregister(x->vm, &y);
+    xns_gc_unregister(x->vm, &x);
+    return prs;
+}
+
 struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
     struct xns_object *obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
     obj->fixnum = value;

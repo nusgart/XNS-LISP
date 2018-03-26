@@ -13,14 +13,5 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  */
-
-#pragma once
-#ifndef XNS_EVAL_H
-#define XNS_EVAL_H
-/// the evalulator
-#include "xns_common.h"
-struct xns_object *macroexpand(struct xns_object *mcro, struct xns_object *env, struct xns_object *args);
-struct xns_object *eval(struct xns_object *obj, struct xns_object *env);
-struct xns_object *evlis(struct xns_object *obj, struct xns_object *env);
-struct xns_object *apply(struct xns_object *obj, struct xns_object *env, struct xns_object *args);
-#endif //XNS_EVAL_H
+// XNS-Lisp primitive operator implementation
+#include "xns_lisp.h"

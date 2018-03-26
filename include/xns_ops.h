@@ -57,6 +57,21 @@ struct xns_object *xns_car(struct xns_object *obj);
 struct xns_object *xns_cdr(struct xns_object *obj);
 struct xns_object *xns_cons(struct xns_vm *vm, struct xns_object *car, struct xns_object *cdr);
 struct xns_object *xns_nreverse(struct xns_object *list);
+struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y);
+struct xns_object *xns_append(struct xns_object *x, struct xns_object *y);
+////// oh no 
+inline struct xns_object *xns_caar(struct xns_object *obj){return xns_car(xns_car(obj));}
+inline struct xns_object *xns_cadr(struct xns_object *obj){return xns_car(xns_cdr(obj));}
+inline struct xns_object *xns_cdar(struct xns_object *obj){return xns_cdr(xns_car(obj));}
+inline struct xns_object *xns_cddr(struct xns_object *obj){return xns_cdr(xns_cdr(obj));}
+/*inline struct xns_object *xns_caaar(struct xns_object *obj)
+struct xns_object *xns_caadr(struct xns_object *obj);
+struct xns_object *xns_cadar(struct xns_object *obj);
+struct xns_object *xns_caddr(struct xns_object *obj);
+struct xns_object *xns_cdaar(struct xns_object *obj);
+struct xns_object *xns_cdadr(struct xns_object *obj);
+struct xns_object *xns_cddar(struct xns_object *obj);
+struct xns_object *xns_cdddr(struct xns_object *obj);*/
 // numbers
 //////////////TODO
 // constructors
