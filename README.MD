@@ -33,11 +33,11 @@ limitations under the License.
 * Garbage collection  -- CheneyGC implemented
 * Environment handling -- initial 
 * S-Expression I/O -- both input & output (still fragile)
-* Source file loading -- the reader can read from any FILE* (but no eval)
-* EVAL/APPLY/EVALIS -- TODO
-* Primitives -- TODO
-* REPL -- TODO (need EVAL, Primitives, and S-Expression I/O first) (R,P,L work)
-* Standard Library -- TODO (need EVAL/APPLY/EVALIS, Primitives, and Source file loading first)
+* Source file loading -- the reader can read from any FILE*
+* EVAL/APPLY/EVALIS -- initial implementation, seems to work
+* Primitives -- In progress: core primitives initially implemented, math&IO still in progress (still thinking about OS interface)
+* REPL -- Mostly TODO
+* Standard Library -- TODO (need EVAL/APPLY/EVALIS, Primitives, and Source file loading first) (need to consider how to bundle this...)
 ## Authors:
 * Nicholas Nusgart <nicknusgart@gmail.com>
 

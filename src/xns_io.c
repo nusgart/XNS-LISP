@@ -28,9 +28,11 @@ char *xns_to_string(struct xns_object *object){
         case XNS_INVL:
             case XNS_INTEGER:
             case XNS_RATIONAL:
-            case XNS_FOREIGN_FUNC:
-            case XNS_FOREIGN_PTR:
                 break;
+            case XNS_FOREIGN_FUNC:
+                return strdup ("#<FOREIGN_FCN>");
+            case XNS_FOREIGN_PTR:
+                return strdup("#<FOREIGN_PTR>");
             case XNS_DOUBLE:
                 as_len = asprintf(&desc, "%f", object->dval);
                 if(as_len == -1){
@@ -101,7 +103,11 @@ char *xns_to_string(struct xns_object *object){
                 return xns_to_string(object->body);
             case XNS_ENV:
                 // TODO print a list of variables and the values bound to them
-                break;
+                res = xns_to_string(object->vars);
+                fmt = xns_to_string(object->parent);
+                asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
+                free(res); free(fmt);
+                return desc;
             case XNS_MOVED:
                 fmt = "Moved Object --> [%s]";
                 desc = xns_to_string(object->ptr);

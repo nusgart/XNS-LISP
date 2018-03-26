@@ -154,7 +154,7 @@ struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
     struct xns_object *prs = x->vm->NIL;
     xns_gc_register(x->vm, &prs);
     while(!xns_nil(x) && !xns_nil(y)){
-        prs = xns_cons(x->vm, xns_cons(x->vm, x,y), prs);
+        prs = xns_cons(x->vm, xns_cons(x->vm, x->car,y->car), prs);
         x = x->cdr;
         y = y->cdr;
     }
@@ -166,11 +166,11 @@ struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
 
 struct xns_object *xns_append(struct xns_object *x, struct xns_object *y){
     if(xns_nil(x)) return y;
-    xns_gc_register(x->vm, x);
-    xns_gc_register(x->vm, y);
+    xns_gc_register(x->vm, &x);
+    xns_gc_register(x->vm, &y);
     xns_object *o = xns_cons(x->vm, x->car, xns_append(x->cdr, y));
-    xns_gc_unregister(x->vm, y);
-    xns_gc_unregister(x->vm, x);
+    xns_gc_unregister(x->vm, &y);
+    xns_gc_unregister(x->vm, &x);
     return o;
 }
 
@@ -232,4 +232,27 @@ struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, 
     xns_gc_unregister(vm, &body);
     xns_gc_unregister(vm, &env);
     return obj;
+}
+
+
+/// CONVERSION
+struct xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value){
+    return vm->NIL; // TODO IMPLEMENT
+    /*switch(value->type){
+        case XNS_FIXNUM:
+    }*/
+}
+struct xns_object *xns_to_real(struct xns_vm *vm, xns_obj value){
+    return vm->NIL;// TODO IMPLEMENT
+}
+struct xns_object *xns_to_double(struct xns_vm *vm, xns_obj value){
+    switch (value->type){
+        default:
+            return vm->NIL;
+        case XNS_INTEGER:
+            return xns_make_double(vm, 0.0/0.0);
+        case XNS_FIXNUM:;
+            long v = value->fixnum;
+            return xns_make_double(vm, (double)v);
+    }
 }

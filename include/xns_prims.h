@@ -18,15 +18,16 @@
 // defines some common operations on objects
 #include "xns_common.h"
 // Internal function -- called on VM startup
-void xns_register_primops(struct xns_vm *vm);
+void xns_register_primops   (struct xns_vm *vm);
 // exit the vm
-xns_object *xns_prim_exit(struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
+xns_object *xns_prim_exit   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 //symbols and gensyms
 xns_object *xns_prim_eq     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_null   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_quote    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 // environment
 xns_object *xns_prim_set    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
+xns_object *xns_prim_define (struct xns_vm *vm, xns_object *env, xns_object *args);
 xns_object *xns_prim_assoc  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_eval   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_apply   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
@@ -46,8 +47,9 @@ xns_object *xns_prim_atom   (struct xns_vm *vm, struct xns_object *env, struct x
 xns_object *xns_prim_and    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_or     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_not    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
+///////////////////////////File Operations: TODO
 
-//numbers
+///////////////////////////numbers
 /// arith ops
 xns_object *xns_prim_plus   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_minus  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
@@ -74,7 +76,7 @@ xns_object *xns_prim_jn     (struct xns_vm *vm, struct xns_object *env, struct x
 xns_object *xns_prim_y0     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_y1     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_yn     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_exp1m   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
+xns_object *xns_prim_expm1   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 /// rounding
 xns_object *xns_prim_floor  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_ceil   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);

@@ -14,6 +14,9 @@
   limitations under the License.
  */
 // XNS-Lisp primitive operator implementation
+// most of the primitives in this file are specials/fundamental operators
+// TODO finish refactoring to make that all of the primitives in this file
+// TODO distinguish langauge primitives from builtin functions
 #include "xns_lisp.h"
 
 static void rp(struct xns_vm *vm, char *name, xns_primitive op){
@@ -28,13 +31,16 @@ static void rp(struct xns_vm *vm, char *name, xns_primitive op){
 void xns_register_primops(struct xns_vm *vm){
     #include "primops.inc"
 }
+
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
-//symbols and gensyms
+
+
 xns_object *xns_prim_exit(struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
     // exit
     exit(0);
 }
+//symbols and gensyms
 xns_object *xns_prim_eq     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
    if(xns_len(args) != 2){
        // TODO ERROR
@@ -78,6 +84,17 @@ xns_object *xns_prim_set    (struct xns_vm *vm, struct xns_object *env, struct x
     U(sym);
     U(args);
     U(env);
+    return val;
+}
+
+xns_object *xns_prim_define (struct xns_vm *vm, xns_object *env, xns_object *args){
+    R(args);
+    xns_object *val = eval(args->cdr->car, env);
+    xns_object *sym = args->car;
+    R(val);
+    xns_set(vm->env, sym, val);
+    U(val);
+    U(args);
     return val;
 }
 
@@ -271,7 +288,7 @@ xns_object *xns_prim_atom   (struct xns_vm *vm, struct xns_object *env, struct x
         o = o->ptr;
     }
     if (o->type != XNS_CONS){
-        return vm->T;
+        return o;
     }
     return vm->NIL;
 }
@@ -323,48 +340,251 @@ xns_object *xns_prim_not    (struct xns_vm *vm, struct xns_object *env, struct x
 
 //numbers
 /// arith ops
-xns_object *xns_prim_plus   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_minus  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_mult   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_divide (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-/// basic ops
-xns_object *xns_prim_isnan  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_abs    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_mod    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_sqrt   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_cbrt   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_hypot  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_expt   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_pow   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_log    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-/// advanced ops
-xns_object *xns_prim_erf    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_erfc   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_gamma  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_lgamma (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_j0     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_j1     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_jn     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_y0     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_y1     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_yn     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_exp1m   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-/// rounding
-xns_object *xns_prim_floor  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_ceil   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_round   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-
-/// trig ops
-xns_object *xns_prim_sin    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_cos    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_tan    (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_asin   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_acos   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_atan   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-/// hyperbolic trig
-xns_object *xns_prim_sinh   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_cosh   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_tanh   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_asinh  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_acosh  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
-xns_object *xns_prim_atanh  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
+xns_object *xns_prim_plus   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+    R(env);
+    R(args);
+    xns_obj ns = evlis(args, env);
+    R(ns);
+    enum xns_type type = XNS_FIXNUM;
+    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+        switch(a->car->type){
+            case XNS_FIXNUM: break;
+            case XNS_DOUBLE: 
+                if(type == XNS_FIXNUM)
+                    type = XNS_DOUBLE;
+                else if (type == XNS_INTEGER){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_INTEGER:
+                if(type == XNS_FIXNUM)
+                    type = XNS_INTEGER;
+                else if (type == XNS_DOUBLE){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_RATIONAL:
+                type = XNS_RATIONAL;
+                break;
+            default:
+                // TODO ERROR
+                break;
+        }
+    }
+    xns_obj ret = vm->NIL;
+    R(ret);
+    switch(type){
+        case XNS_FIXNUM:;
+            long lsum = 0;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                lsum += a->car->fixnum;
+            }
+            ret = xns_make_fixnum(vm, lsum);
+            break;
+        case XNS_DOUBLE:;
+            double dsum = 0.0;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                dsum += xns_to_double(vm, a->car)->dval;
+            }
+            ret = xns_make_double(vm, dsum);
+            break;
+        case XNS_RATIONAL:
+        case XNS_INTEGER:
+            // TODO IMPLEMENT
+            break;
+        default: break;//TODO ERROR
+    }
+    U(ret);
+    U(ns);
+    U(args);
+    U(env);
+    return ret;
+}
+xns_object *xns_prim_minus  (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+    R(env);
+    R(args);
+    xns_obj ns = evlis(args, env);
+    R(ns);
+    enum xns_type type = XNS_FIXNUM;
+    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+        switch(a->car->type){
+            case XNS_FIXNUM: break;
+            case XNS_DOUBLE: 
+                if(type == XNS_FIXNUM)
+                    type = XNS_DOUBLE;
+                else if (type == XNS_INTEGER){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_INTEGER:
+                if(type == XNS_FIXNUM)
+                    type = XNS_INTEGER;
+                else if (type == XNS_DOUBLE){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_RATIONAL:
+                type = XNS_RATIONAL;
+                break;
+            default:
+                // TODO ERROR
+                break;
+        }
+    }
+    xns_obj ret = vm->NIL;
+    R(ret);
+    switch(type){
+        case XNS_FIXNUM:;
+            long lsum = 0;
+            long ls = 1;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                lsum += ls * a->car->fixnum;
+                ls = -1;
+            }
+            ret = xns_make_fixnum(vm, lsum);
+            break;
+        case XNS_DOUBLE:;
+            double dsum = 0.0;
+            double ds = 1.0;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                dsum += ds * xns_to_double(vm, a->car)->dval;
+                ds = -1.0;
+            }
+            ret = xns_make_double(vm, dsum);
+            break;
+        case XNS_RATIONAL:
+        case XNS_INTEGER:
+            // TODO IMPLEMENT
+            break;
+        default: break;//TODO ERROR
+    }
+    U(ret);
+    U(ns);
+    U(args);
+    U(env);
+    return ret;
+}
+xns_object *xns_prim_mult   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+    R(env);
+    R(args);
+    xns_obj ns = evlis(args, env);
+    R(ns);
+    enum xns_type type = XNS_FIXNUM;
+    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+        switch(a->car->type){
+            case XNS_FIXNUM: break;
+            case XNS_DOUBLE: 
+                if(type == XNS_FIXNUM)
+                    type = XNS_DOUBLE;
+                else if (type == XNS_INTEGER){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_INTEGER:
+                if(type == XNS_FIXNUM)
+                    type = XNS_INTEGER;
+                else if (type == XNS_DOUBLE){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_RATIONAL:
+                type = XNS_RATIONAL;
+                break;
+            default:
+                // TODO ERROR
+                break;
+        }
+    }
+    xns_obj ret = vm->NIL;
+    R(ret);
+    switch(type){
+        case XNS_FIXNUM:;
+            long lsum = 1;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                lsum *= a->car->fixnum;
+            }
+            ret = xns_make_fixnum(vm, lsum);
+            break;
+        case XNS_DOUBLE:;
+            double dsum = 1.0;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                dsum *= xns_to_double(vm, a->car)->dval;
+            }
+            ret = xns_make_double(vm, dsum);
+            break;
+        case XNS_RATIONAL:
+        case XNS_INTEGER:
+            // TODO IMPLEMENT
+            break;
+        default: break;//TODO ERROR
+    }
+    U(ret);
+    U(ns);
+    U(args);
+    U(env);
+    return ret;
+}
+xns_object *xns_prim_divide (struct xns_vm *vm, struct xns_object *env, struct xns_object *args){
+    R(env);
+    R(args);
+    xns_obj ns = evlis(args, env);
+    R(ns);
+    enum xns_type type = XNS_FIXNUM;
+    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+        switch(a->car->type){
+            case XNS_FIXNUM: break;
+            case XNS_DOUBLE: 
+                if(type == XNS_FIXNUM)
+                    type = XNS_DOUBLE;
+                else if (type == XNS_INTEGER){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_INTEGER:
+                if(type == XNS_FIXNUM)
+                    type = XNS_INTEGER;
+                else if (type == XNS_DOUBLE){
+                    type = XNS_RATIONAL;
+                }
+                break;
+            case XNS_RATIONAL:
+                type = XNS_RATIONAL;
+                break;
+            default:
+                // TODO ERROR
+                break;
+        }
+    }
+    xns_obj ret = vm->NIL;
+    R(ret);
+    switch(type){
+        case XNS_FIXNUM:;
+            long lsum = 0;
+            bool aaa = true;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                lsum = (aaa) ? a->car->fixnum: lsum / a->car->fixnum;
+                aaa = false;
+            }
+            ret = xns_make_fixnum(vm, lsum);
+            break;
+        case XNS_DOUBLE:;
+            double dsum = 1.0;
+            bool dfirst = true;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                dsum = dfirst? xns_to_double(vm, a->car)->dval: dsum / xns_to_double(vm, a->car)->dval;
+                dfirst = false;
+            }
+            ret = xns_make_double(vm, dsum);
+            break;
+        case XNS_RATIONAL:
+        case XNS_INTEGER:
+            // TODO IMPLEMENT
+            break;
+        default: break;//TODO ERROR
+    }
+    U(ret);
+    U(ns);
+    U(args);
+    U(env);
+    return ret;
+}

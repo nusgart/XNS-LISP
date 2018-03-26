@@ -83,4 +83,8 @@ struct xns_object *xns_make_string(struct xns_vm *vm, char *value);
 struct xns_object *xns_make_function(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env);
 struct xns_object *xns_make_macro(struct xns_vm *vm, struct xns_object *params, struct xns_object *body, struct xns_object *env);
 //struct xns_object *xns_make_fixnums(struct xns_vm *vm, long value); // this is a template
+///////conversion
+struct xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value);
+struct xns_object *xns_to_real(struct xns_vm *vm, xns_obj value);
+struct xns_object *xns_to_double(struct xns_vm *vm, xns_obj value);
 #endif //XNS_OPS_H
