@@ -57,6 +57,7 @@ struct xns_object *xns_car(struct xns_object *obj);
 struct xns_object *xns_cdr(struct xns_object *obj);
 struct xns_object *xns_cons(struct xns_vm *vm, struct xns_object *car, struct xns_object *cdr);
 struct xns_object *xns_nreverse(struct xns_object *list);
+size_t xns_len(struct xns_object *list);
 struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y);
 struct xns_object *xns_append(struct xns_object *x, struct xns_object *y);
 ////// oh no 

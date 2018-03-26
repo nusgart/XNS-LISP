@@ -19,6 +19,8 @@
 #include "xns_common.h"
 // Internal function -- called on VM startup
 void xns_register_primops(struct xns_vm *vm);
+// exit the vm
+xns_object *xns_prim_exit(struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 //symbols and gensyms
 xns_object *xns_prim_eq     (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);
 xns_object *xns_prim_null   (struct xns_vm *vm, struct xns_object *env, struct xns_object *args);

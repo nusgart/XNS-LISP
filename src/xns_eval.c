@@ -21,6 +21,9 @@
 /// Implementation is almost straight out of J. McCarthy et al 1961
 
 struct xns_object *eval(struct xns_object *obj, struct xns_object *env){
+    if(!obj){
+        return env->vm->NIL;
+    }
     switch(obj->type){
         // handle --> eval handle
         case XNS_HANDLE:
@@ -43,7 +46,17 @@ struct xns_object *eval(struct xns_object *obj, struct xns_object *env){
         case XNS_CONS:
             // This differs from the paper in that the primitives are not implemented inline
             // and to allow for this, the arguements ARE NOT EVALUATED!
-            return apply(eval(xns_car(obj), env), env, xns_cdr(obj));
+            printf("APPLYING FCN %s\n", obj->car->symname);
+            xns_gc_register(obj->vm, &obj);
+            xns_gc_register(obj->vm, &env);
+            xns_obj val = eval(obj->car, env);
+            xns_gc_register(obj->vm, val);
+            xns_print_object(val);
+            xns_obj ret = apply(val, env, obj->cdr);
+            xns_gc_unregister(obj->vm, &obj);
+            xns_gc_unregister(obj->vm, &env);
+            xns_gc_unregister(obj->vm, val);
+            return ret;
         default:
             // ??? -- should this error?
             return obj;
@@ -102,6 +115,7 @@ struct xns_object *apply(struct xns_object *fn, struct xns_object *env, struct x
         xns_gc_unregister(fn->vm, &args);
         return ret;
     } else if (fn->type == XNS_PRIMITIVE){
+        printf("PRIMITIVE\n");
         return fn->primitive(fn->vm, env, args);
     } else if (fn->type == XNS_FOREIGN_FUNC){
         return fn->foreign_fcn(args, env);

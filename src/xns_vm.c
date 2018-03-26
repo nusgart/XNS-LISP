@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 
 /// FOR PRODUCTION DEFINE TO 1 MB -- 1048576
-#define MIN_HEAP_SIZE 128
+#define MIN_HEAP_SIZE (1<<22)
 
 // create an xns_vm
 struct xns_vm *xns_create_vm(size_t initial_heap_size){
@@ -60,6 +60,10 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     xns_gc_register(vm, &vm->Dot);
     vm->Quote = xns_intern(vm, "quote");
     xns_gc_register(vm, &vm->Quote);
+    xns_set(vm->env, vm->NIL, vm->NIL);
+    xns_set(vm->env, vm->T, vm->T);
+    xns_set(vm->env, vm->NIL, vm->NIL);
+    xns_register_primops(vm);
     return vm;
 }
 static void deleteframe(struct xns_vm *vm, struct xns_gcframe *frame);

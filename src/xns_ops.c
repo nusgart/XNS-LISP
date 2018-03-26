@@ -164,6 +164,27 @@ struct xns_object *xns_pair(struct xns_object *x, struct xns_object *y){
     return prs;
 }
 
+struct xns_object *xns_append(struct xns_object *x, struct xns_object *y){
+    if(xns_nil(x)) return y;
+    xns_gc_register(x->vm, x);
+    xns_gc_register(x->vm, y);
+    xns_object *o = xns_cons(x->vm, x->car, xns_append(x->cdr, y));
+    xns_gc_unregister(x->vm, y);
+    xns_gc_unregister(x->vm, x);
+    return o;
+}
+
+size_t xns_len(struct xns_object *list){
+    // hopefully this will prevent problems
+    if (list->type != XNS_CONS) return 0;
+    size_t len = 0;
+    while(!xns_nil(list)){
+        list = list->cdr;
+        len++;
+    }
+    return len;
+}
+
 struct xns_object *xns_make_fixnum(struct xns_vm *vm, long value){
     struct xns_object *obj = xns_alloc_object(vm, XNS_FIXNUM, sizeof(long));
     obj->fixnum = value;

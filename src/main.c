@@ -65,7 +65,10 @@ int main(int argc, char**argv){
     // RPL -- READ PRINT LOOP (It's only missing EVAL!)
     while(!feof(stdin)){
         struct xns_object *rdobj = xns_read_file(vm, stdin);
+        xns_gc_register(vm, &rdobj);
+        struct xns_object *ev = eval(rdobj, vm->env);
         xns_print_object(rdobj);
+        xns_print_object(ev);
     }
     xns_destroy_vm(vm);
     return 0;
