@@ -1,4 +1,4 @@
 ### XNS Gitignore
 *.o
 /xns_lisp
-/src/primops.inc
+/src/prims/primops.inc
