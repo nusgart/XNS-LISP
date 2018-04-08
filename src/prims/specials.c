@@ -252,6 +252,39 @@ xns_object *xns_prim_pair   (struct xns_vm *vm, xns_obj env, xns_obj args){
     U(second);
     return p;
 }
+
+xns_object *xns_prim_setcar(struct xns_vm *vm, xns_obj env, xns_obj args){
+    R(env); R(args);
+    xns_obj val = eval(args->cdr->car, env);
+    R(val);
+    xns_obj cons = eval(args->car, env);
+    R(cons);
+    if (cons->type == XNS_CONS) {
+        cons->car = val;
+    } else {
+        //TODO ERROR
+        return vm->NIL;
+    }
+    U(val); U(cons); U(args); U(env);
+    return cons;
+}
+
+xns_object *xns_prim_setcdr(struct xns_vm *vm, xns_obj env, xns_obj args){
+    R(env); R(args);
+    xns_obj val = eval(args->cdr->car, env);
+    R(val);
+    xns_obj cons = eval(args->car, env);
+    R(cons);
+    if (cons->type == XNS_CONS) {
+        cons->cdr = val;
+    } else {
+        //TODO ERROR
+        return vm->NIL;
+    }
+    U(val); U(cons); U(args); U(env);
+    return cons;
+}
+
 xns_object *xns_prim_append (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
         // TODO ERROR
