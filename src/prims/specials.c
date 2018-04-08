@@ -51,22 +51,15 @@ xns_object *xns_prim_eq     (struct xns_vm *vm, xns_obj env, xns_obj args){
    R(obj);
    xns_obj other=eval(args->cdr->car, env);
    if (xns_eq(obj, other)) {
-       U(obj);
-       U(env);
+       U(obj); U(env);
        return vm->T;
    }
-   U(obj);
-   U(env);
+   U(obj); U(env);
    return vm->NIL;
 }
 xns_object *xns_prim_null   (struct xns_vm *vm, xns_obj env, xns_obj args){
     xns_obj res = eval(args->car, env);
-    if (xns_nil(res)) {
-        res = vm->T;
-    } else {
-        res = vm->NIL;
-    }
-    return res;
+    return xns_nil(res) ? vm->T: vm->NIL;
 }
 xns_object *xns_prim_quote    (struct xns_vm *vm, xns_obj env, xns_obj args){
     (void) vm; (void) env;
@@ -74,17 +67,12 @@ xns_object *xns_prim_quote    (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 // environment
 xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
+    R(env); R(args);
     xns_obj val = eval(args->cdr->car, env);
     xns_obj sym = args->car;
-    R(sym);
-    R(val);
+    R(sym); R(val);
     xns_set(env, sym, val);
-    U(val);
-    U(sym);
-    U(args);
-    U(env);
+    U(val); U(sym); U(args); U(env);
     return val;
 }
 
@@ -100,8 +88,7 @@ xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 
 xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
+    R(env); R(args);
     xns_obj key = eval(args->car, env);
     R(key);
     xns_obj list = eval(args->cdr->car, env);
@@ -113,9 +100,7 @@ xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args){
         }
         list = list->cdr;
     }
-    U(key);
-    U(args);
-    U(env);
+    U(key); U(args); U(env);
     return rtn;
 }
 xns_object *xns_prim_eval   (struct xns_vm *vm, xns_obj env, xns_obj args){
@@ -344,255 +329,4 @@ xns_object *xns_prim_not    (struct xns_vm *vm, xns_obj env, xns_obj args){
         return vm->T;
     }
     return vm->NIL;
-}
-
-//numbers
-/// arith ops
-xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
-    xns_obj ns = evlis(args, env);
-    R(ns);
-    enum xns_type type = XNS_FIXNUM;
-    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-        switch(a->car->type){
-            case XNS_FIXNUM: break;
-            case XNS_DOUBLE: 
-                if(type == XNS_FIXNUM)
-                    type = XNS_DOUBLE;
-                else if (type == XNS_INTEGER){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_INTEGER:
-                if(type == XNS_FIXNUM)
-                    type = XNS_INTEGER;
-                else if (type == XNS_DOUBLE){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_RATIONAL:
-                type = XNS_RATIONAL;
-                break;
-            default:
-                // TODO ERROR
-                break;
-        }
-    }
-    xns_obj ret = vm->NIL;
-    R(ret);
-    switch(type){
-        case XNS_FIXNUM:;
-            long lsum = 0;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                lsum += a->car->fixnum;
-            }
-            ret = xns_make_fixnum(vm, lsum);
-            break;
-        case XNS_DOUBLE:;
-            double dsum = 0.0;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                dsum += xns_to_double(vm, a->car)->dval;
-            }
-            ret = xns_make_double(vm, dsum);
-            break;
-        case XNS_RATIONAL:
-        case XNS_INTEGER:
-            // TODO IMPLEMENT
-            break;
-        default: break;//TODO ERROR
-    }
-    U(ret);
-    U(ns);
-    U(args);
-    U(env);
-    return ret;
-}
-xns_object *xns_prim_minus  (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
-    xns_obj ns = evlis(args, env);
-    R(ns);
-    enum xns_type type = XNS_FIXNUM;
-    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-        switch(a->car->type){
-            case XNS_FIXNUM: break;
-            case XNS_DOUBLE: 
-                if(type == XNS_FIXNUM)
-                    type = XNS_DOUBLE;
-                else if (type == XNS_INTEGER){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_INTEGER:
-                if(type == XNS_FIXNUM)
-                    type = XNS_INTEGER;
-                else if (type == XNS_DOUBLE){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_RATIONAL:
-                type = XNS_RATIONAL;
-                break;
-            default:
-                // TODO ERROR
-                break;
-        }
-    }
-    xns_obj ret = vm->NIL;
-    R(ret);
-    switch(type){
-        case XNS_FIXNUM:;
-            long lsum = 0;
-            long ls = 1;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                lsum += ls * a->car->fixnum;
-                ls = -1;
-            }
-            ret = xns_make_fixnum(vm, lsum);
-            break;
-        case XNS_DOUBLE:;
-            double dsum = 0.0;
-            double ds = 1.0;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                dsum += ds * xns_to_double(vm, a->car)->dval;
-                ds = -1.0;
-            }
-            ret = xns_make_double(vm, dsum);
-            break;
-        case XNS_RATIONAL:
-        case XNS_INTEGER:
-            // TODO IMPLEMENT
-            break;
-        default: break;//TODO ERROR
-    }
-    U(ret);
-    U(ns);
-    U(args);
-    U(env);
-    return ret;
-}
-xns_object *xns_prim_mult   (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
-    xns_obj ns = evlis(args, env);
-    R(ns);
-    enum xns_type type = XNS_FIXNUM;
-    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-        switch(a->car->type){
-            case XNS_FIXNUM: break;
-            case XNS_DOUBLE: 
-                if(type == XNS_FIXNUM)
-                    type = XNS_DOUBLE;
-                else if (type == XNS_INTEGER){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_INTEGER:
-                if(type == XNS_FIXNUM)
-                    type = XNS_INTEGER;
-                else if (type == XNS_DOUBLE){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_RATIONAL:
-                type = XNS_RATIONAL;
-                break;
-            default:
-                // TODO ERROR
-                break;
-        }
-    }
-    xns_obj ret = vm->NIL;
-    R(ret);
-    switch(type){
-        case XNS_FIXNUM:;
-            long lsum = 1;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                lsum *= a->car->fixnum;
-            }
-            ret = xns_make_fixnum(vm, lsum);
-            break;
-        case XNS_DOUBLE:;
-            double dsum = 1.0;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                dsum *= xns_to_double(vm, a->car)->dval;
-            }
-            ret = xns_make_double(vm, dsum);
-            break;
-        case XNS_RATIONAL:
-        case XNS_INTEGER:
-            // TODO IMPLEMENT
-            break;
-        default: break;//TODO ERROR
-    }
-    U(ret);
-    U(ns);
-    U(args);
-    U(env);
-    return ret;
-}
-xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env);
-    R(args);
-    xns_obj ns = evlis(args, env);
-    R(ns);
-    enum xns_type type = XNS_FIXNUM;
-    for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-        switch(a->car->type){
-            case XNS_FIXNUM: break;
-            case XNS_DOUBLE: 
-                if(type == XNS_FIXNUM)
-                    type = XNS_DOUBLE;
-                else if (type == XNS_INTEGER){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_INTEGER:
-                if(type == XNS_FIXNUM)
-                    type = XNS_INTEGER;
-                else if (type == XNS_DOUBLE){
-                    type = XNS_RATIONAL;
-                }
-                break;
-            case XNS_RATIONAL:
-                type = XNS_RATIONAL;
-                break;
-            default:
-                // TODO ERROR
-                break;
-        }
-    }
-    xns_obj ret = vm->NIL;
-    R(ret);
-    switch(type){
-        case XNS_FIXNUM:;
-            long lsum = 0;
-            bool aaa = true;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                lsum = (aaa) ? a->car->fixnum: lsum / a->car->fixnum;
-                aaa = false;
-            }
-            ret = xns_make_fixnum(vm, lsum);
-            break;
-        case XNS_DOUBLE:;
-            double dsum = 1.0;
-            bool dfirst = true;
-            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                dsum = dfirst? xns_to_double(vm, a->car)->dval: dsum / xns_to_double(vm, a->car)->dval;
-                dfirst = false;
-            }
-            ret = xns_make_double(vm, dsum);
-            break;
-        case XNS_RATIONAL:
-        case XNS_INTEGER:
-            // TODO IMPLEMENT
-            break;
-        default: break;//TODO ERROR
-    }
-    U(ret);
-    U(ns);
-    U(args);
-    U(env);
-    return ret;
 }
