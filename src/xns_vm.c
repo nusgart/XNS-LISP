@@ -42,30 +42,79 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     // null out symbols and env 
     vm->symbols = NULL;
     vm->env = NULL;
+    vm->debug = fopen("/dev/null", "w");
     // we need to protect the VM from its own gc
     xns_gc_register(vm, &vm->symbols);
-    // register symbols
+    /////// register symbols
+    // NIL - is false & empty list
     vm->NIL = xns_intern(vm, "NIL");
     asm volatile("": : :"memory");
     vm->symbols->cdr = vm->NIL;
     asm volatile("": : :"memory");
     xns_gc_register(vm, &vm->NIL);
+    // T - generic symbol used as true (any non-nill object works)
     vm->T = xns_intern(vm, "T");
     xns_gc_register(vm, &vm->T);
+    // the global environment
     vm->env = xns_make_env(vm, NULL);
     xns_gc_register(vm, &vm->env);
+    // the toplevel environment
+    vm->toplevel_env = xns_make_env(vm, vm->env);
+    // Right parenthesis -- this is used solely for parsing
     vm->Rparen = xns_intern(vm, ")");
     xns_gc_register(vm, &vm->Rparen);
+    // Dot -- also only used for parsing 
     vm->Dot = xns_intern(vm, ".");
     xns_gc_register(vm, &vm->Dot);
+    // the quote operator --> given a value, returns that value without evaluating it.
     vm->Quote = xns_intern(vm, "quote");
     xns_gc_register(vm, &vm->Quote);
+    // &rest: must be the next to last element in a lambda list: makes it so that the last variable
+    // contains a list of all unmatched arguements (TODO: better explanation)
+    vm->rest = xns_intern(vm, "&rest");
+    xns_gc_register(vm, &vm->rest);
+    // setup global environment
     xns_set(vm->env, vm->NIL, vm->NIL);
     xns_set(vm->env, vm->T, vm->T);
     xns_set(vm->env, vm->NIL, vm->NIL);
+    xns_set(vm->env, vm->rest, vm->rest);
+    // the top level environment is for user-defined code (user here means anything other than the XNS Lisp implementation).
+    vm->toplevel_env = xns_make_env(vm, vm->env);
+    xns_gc_register(vm, &vm->toplevel_env);
+    // register the primops in the global environment
     xns_register_primops(vm);
     return vm;
 }
+
+void xns_load_file(struct xns_vm *vm, xns_obj env, FILE *fp){
+    #ifndef XNS_LOAD_SINGLE_READ
+    while(!feof(fp)){
+       xns_obj expr = xns_read_file(vm, fp);
+        eval(expr, env);
+    }
+    #else
+    xns_obj repr = xns_read_whole_file(vm, fp);
+    xns_gc_register(vm, &repr);
+    while(!xns_nil(repr)){
+        eval(repr->car, env);
+        repr = repr->cdr;
+    }
+    xns_gc_unregister(vm, &repr);
+    #endif
+}
+
+void xns_load_stdlib(struct xns_vm *vm){
+    // load standard defintions
+    FILE *file = fopen("lisp/stddef.lisp", "r");
+    xns_load_file(vm, vm->env, file);
+    fclose(file);
+    // load math definitions
+    file = fopen("lisp/math.lisp", "r");
+    xns_load_file(vm, vm->env, file);
+    fclose(file);
+    // todo more?
+}
+
 static void deleteframe(struct xns_vm *vm, struct xns_gcframe *frame);
 // destroy an xns_vm
 void xns_destroy_vm(struct xns_vm *vm){
@@ -97,11 +146,11 @@ static struct xns_gcframe *makeframe(struct xns_vm *vm){
     struct xns_gcframe *frame = calloc(1, sizeof(struct xns_gcframe));
     frame->prev = vm->frame;
     if(vm->frame){
-        printf("Making frame\n");
+        fprintf(vm->debug, "Making frame\n");
         vm->frame->next = frame;
         vm->frame = frame;
     }else{
-        printf("Creating first gcframe\n");
+        fprintf(vm->debug, "Creating first gcframe\n");
         vm->firstframe = frame;
         vm->frame = frame;
     }

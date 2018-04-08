@@ -44,13 +44,15 @@ struct xns_vm{
     // the list of symbols
     xns_obj symbols;
     ////Environment
-    xns_obj env;
+    xns_obj env; // global environment: use this for standard symbols
+    xns_obj toplevel_env; // toplevel environment: use this for user defined symbols
     //// Global symbols
     xns_obj NIL;
     xns_obj T;
     xns_obj Dot;
     xns_obj Rparen;
     xns_obj Quote;
+    xns_obj rest;
     //// gc info
     xns_obj scan1;
     xns_obj scan2;
@@ -59,12 +61,14 @@ struct xns_vm{
     //// heap data
     struct xns_heap{
         size_t size;
+        size_t min_size;
         size_t used;
         int allocs;
         void *current_heap;
         void *old_heap;
     } heap;
     bool gc_active;
+    FILE *debug;
 };
 
 /**
@@ -76,6 +80,20 @@ struct xns_vm{
  * * and sets up the initial symbols and the environment.
  */
 struct xns_vm *xns_create_vm(size_t initial_heap_size);
+/**
+ * Loads the standard library. Note that most XNS Lisp
+ * code will require this to be loaded - 
+ * 
+ * The standard library currently includes:
+ * * essential utilities (list, fold, reduce)
+ * * basic definitions (defmacro, defun, )
+ * 
+ */
+void xns_load_stdlib(struct xns_vm *vm);
+/**
+ * Loads a file
+ */
+void xns_load_file(struct xns_vm *vm, xns_obj env, FILE *fp);
 /**
  * Destroys an xns_vm.
  */

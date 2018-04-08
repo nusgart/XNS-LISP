@@ -33,7 +33,7 @@ xns_object *xns_intern(xns_vm *vm, const char *name){
     xns_obj obj = xns_alloc_object(vm, XNS_SYMBOL, size);
     obj->symid = vm->current_symbol++;
     strcpy(obj->symname, name);
-    printf("Added symbol %s with symid %lu objid %u\n", obj->symname, obj->symid, obj->object_id);
+    fprintf(vm->debug, "Added symbol %s with symid %lu objid %u\n", obj->symname, obj->symid, obj->object_id);
     xns_gc_register(vm, &obj);
     vm->symbols = xns_cons(vm, obj, vm->symbols);
     xns_gc_unregister(vm, &obj);
@@ -68,7 +68,7 @@ bool xns_nil(xns_obj obj){
 xns_object *xns_make_env(xns_vm *vm, xns_obj parent){
     xns_gc_register(vm, &parent);
     xns_obj obj = xns_alloc_object(vm, XNS_ENV, 2 * sizeof(xns_obj ));
-    printf("ENV Object %d has size %lu\n", obj->object_id, obj->size);
+    fprintf(vm->debug, "ENV Object %d has size %lu\n", obj->object_id, obj->size);
     obj->parent = parent? parent: vm->NIL;
     obj->vars = vm->NIL;
     xns_gc_unregister(vm, &parent);
@@ -204,7 +204,8 @@ xns_object *xns_make_string(struct xns_vm *vm, char *value){
     size_t len = strlen(value) + 1;
     xns_obj obj = xns_alloc_object(vm, XNS_STRING, len);
     strncpy(obj->string, value, len);
-    obj->string[len-1] = 0; 
+    obj->string[len-1] = 0;
+    obj->len = len-1;
     return obj;
 }
 xns_object *xns_make_function(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){
@@ -253,6 +254,8 @@ xns_object *xns_to_double(struct xns_vm *vm, xns_obj value){
             return vm->NIL;
         case XNS_INTEGER:
             return xns_make_double(vm, 0.0/0.0);
+        case XNS_DOUBLE:
+            return value;
         case XNS_FIXNUM:;
             long v = value->fixnum;
             return xns_make_double(vm, (double)v);

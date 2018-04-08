@@ -17,6 +17,8 @@
 #pragma once
 #ifndef XNS_COMMON_H
 #define XNS_COMMON_H
+#define _GNU_SOURCE
+#define _XOPEN_SOURCE 700
 // common includes, forward declarations, ....
 #include <stdint.h>
 #include <stddef.h>

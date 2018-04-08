@@ -62,14 +62,20 @@ int main(int argc, char**argv){
         xns_gc_unregister(vm, &objects[i]);
     }
     memset((void*)objects, 0, sizeof(objects));
+    xns_load_stdlib(vm);
     // RPL -- READ PRINT LOOP (It's only missing EVAL!)
     while(!feof(stdin)){
+        printf("> ");
         xns_obj rdobj = xns_read_file(vm, stdin);
+        if(!rdobj || feof(stdin)){
+            break;
+        }
         xns_gc_register(vm, &rdobj);
-        xns_obj ev = eval(rdobj, vm->env);
+        xns_obj ev = eval(rdobj, vm->toplevel_env);
         xns_print_object(rdobj);
         xns_print_object(ev);
     }
+    printf("\n");
     xns_destroy_vm(vm);
     return 0;
 }
