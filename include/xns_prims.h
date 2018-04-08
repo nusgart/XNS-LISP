@@ -24,18 +24,19 @@ xns_object *xns_prim_exit   (struct xns_vm *vm, xns_obj env, xns_obj args);
 //symbols and gensyms
 xns_object *xns_prim_eq     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_null   (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_quote    (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_quote  (struct xns_vm *vm, xns_obj env, xns_obj args);
 // environment
 xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_eval   (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_apply   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_apply  (struct xns_vm *vm, xns_obj env, xns_obj args);
 // control
 xns_object *xns_prim_let    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cond   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_lambda (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_labels  (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_mlambda (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_labels (struct xns_vm *vm, xns_obj env, xns_obj args);
 // Cons Cells
 xns_object *xns_prim_car    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -48,7 +49,7 @@ xns_object *xns_prim_and    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_or     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_not    (struct xns_vm *vm, xns_obj env, xns_obj args);
 ///////////////////////////File Operations: TODO
-
+xns_object *xns_prim_load   (struct xns_vm *vm, xns_obj env, xns_obj args);
 ///////////////////////////numbers
 /// arith ops
 xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -63,7 +64,7 @@ xns_object *xns_prim_sqrt   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cbrt   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_hypot  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_expt   (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_pow   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_pow    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_log    (struct xns_vm *vm, xns_obj env, xns_obj args);
 /// advanced ops
 xns_object *xns_prim_erf    (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -76,11 +77,11 @@ xns_object *xns_prim_jn     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_y0     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_y1     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_yn     (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_expm1   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_expm1  (struct xns_vm *vm, xns_obj env, xns_obj args);
 /// rounding
 xns_object *xns_prim_floor  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_ceil   (struct xns_vm *vm, xns_obj env, xns_obj args);
-xns_object *xns_prim_round   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_round  (struct xns_vm *vm, xns_obj env, xns_obj args);
 
 /// trig ops
 xns_object *xns_prim_sin    (struct xns_vm *vm, xns_obj env, xns_obj args);

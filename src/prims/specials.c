@@ -186,6 +186,10 @@ xns_object *xns_prim_lambda (struct xns_vm *vm, xns_obj env, xns_obj args){
     return xns_make_function(vm, args->car, args->cdr, env);
 }
 
+xns_object *xns_prim_mlambda(struct xns_vm *vm, xns_obj env, xns_obj args){
+    return xns_make_macro(vm, args->car, args->cdr, env);
+}
+
 xns_object *xns_prim_labels  (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env);
     R(args);
