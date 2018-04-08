@@ -51,7 +51,8 @@ char *xns_to_string(xns_obj object){
                 }
                 return desc;
             case XNS_STRING:
-                return strdup(object->string);
+                as_len = asprintf(&desc, "\"%s\"", object->string);
+                return desc;
             // symbol / gensym
             case XNS_GENSYM:
             case XNS_SYMBOL:
@@ -123,6 +124,13 @@ char *xns_to_string(xns_obj object){
     }
     return NULL;
 }
+
+#include "typestr.inc"
+
+char *xns_type_to_string(enum xns_type type){
+    return xns_type_strs[type];
+}
+
 void  xns_print_object(xns_obj object){
     char *a = xns_to_string(object);
     printf("%s\n",a);
@@ -282,10 +290,12 @@ xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
 
 // read a whole file
 xns_object *xns_read_whole_file(struct xns_vm *vm, FILE *fp){
-    xns_obj obj=NULL;
+    xns_obj obj=vm->NIL;
+    xns_gc_register(vm, &obj);
     while(!feof(fp)){
-        obj = xns_read_file(vm, fp);
+        obj = xns_cons(vm, xns_read_file(vm, fp), obj);
     }
+    xns_gc_unregister(vm, &obj);
     return obj;
 }
 

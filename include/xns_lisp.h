@@ -24,4 +24,5 @@
 #include "xns_io.h"
 #include "xns_prims.h"
 #include "xns_eval.h"
+char *xns_type_to_string(enum xns_type type);
 #endif //XNS_LISP_H

@@ -4,6 +4,13 @@
 			"path": "."
 		}
 	],
-	"settings": {},
+	"settings": {
+		"files.associations": {
+			"*.inc": "c",
+			"xns_lisp.h": "c",
+			"math.h": "c",
+			"cmath": "c"
+		}
+	},
 	
 }
