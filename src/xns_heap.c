@@ -37,12 +37,14 @@ xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size)
         }
         // this actually gives us more free space
         xns_vm_gc(vm, 2 * vm->heap.used);
+        //xns_vm_gc(vm, 2 * vm->heap.used); // enabling second gc SHOULD allow the heap to contract
     }
     xns_obj obj = (struct xns_object*)(vm->heap.current_heap+vm->heap.used);
     obj->size = size;
     obj->type = type;
     obj->object_id = vm->current_objectID++;
     obj->vm = vm;
+    vm->heap.allocs++;
     vm->heap.used += size;
     fprintf(vm->debug, "Currently used %lu bytes after making object %u\n", vm->heap.used, obj->object_id);
     fprintf(vm->debug, "---------------------------------------------\n\n");
@@ -181,6 +183,7 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
     vm->heap.size = newsize;
     ptrdiff_t diff = (uint8_t*)vm->scan1 - (uint8_t*)vm->heap.current_heap;
     vm->heap.used = (size_t)diff;
+    vm->heap.numGCs++;
     vm->gc_active = false;
     fprintf(vm->debug, "WE DIDN'T CRASH!!!\n");
 }

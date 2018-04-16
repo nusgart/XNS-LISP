@@ -58,11 +58,20 @@ xns_object *eval(xns_obj obj, xns_obj env){
             xns_print_object(val);
             xns_obj ret = apply(val, env, obj->cdr);
             U(obj); U(env); U(val);
+            ptrdiff_t diff = (char*)ret - (char*)vm->heap.current_heap;
+            if(diff < 0 || diff > vm->heap.size){
+                vm->warning(vm, "xns_eval: object is out of bounds!", obj);
+                fprintf(stderr, "xns_eval %p probable fail\n", ret);
+                fflush(stderr);
+                vm->error(vm, "xns_eval: object out of bounds", ret);
+            }
             return ret;
         default:
             // ??? -- should this error?
+            vm->error(vm, "Bad object type in eval", obj);
             return obj;
     }
+    vm->error(vm, "Eval executing an unreachable segment", NULL);
     return NULL;
 }
 xns_object *evlis(xns_obj obj, xns_obj env){

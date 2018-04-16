@@ -16,6 +16,24 @@
 #include "xns_lisp.h"
 #include <sys/mman.h>
 
+static void xns_error(struct xns_vm *vm, char *reason, xns_obj object){
+    char *desc = (object) ? xns_to_string(object):"";
+    fprintf(stderr, "Error: %s %s\n", reason, desc);
+    if(object){
+        free(desc);
+    }
+    //TODO more?
+}
+
+static void xns_warning(struct xns_vm *vm, char *reason, xns_obj object){
+    char *desc = (object) ? xns_to_string(object):"";
+    fprintf(stderr, "Warning: %s %s\n", reason, desc);
+    if(object){
+        free(desc);
+    }
+    //TODO more?
+}
+
 /// FOR PRODUCTION DEFINE TO 1 MB -- 1048576
 #define MIN_HEAP_SIZE (1<<22)
 
@@ -33,6 +51,7 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     vm->heap.current_heap = mmap(NULL, initial_heap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     // initialize gc variables
     vm->heap.old_heap = NULL;
+    vm->heap.numGCs = 0;
     vm->gc_active = false;
     vm->scan1 = NULL;
     vm->scan2 = NULL;
@@ -43,6 +62,8 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     vm->symbols = NULL;
     vm->env = NULL;
     vm->debug = fopen("/dev/null", "w");
+    vm->error = xns_error;
+    vm->warning = xns_warning;
     // we need to protect the VM from its own gc
     xns_gc_register(vm, &vm->symbols);
     /////// register symbols

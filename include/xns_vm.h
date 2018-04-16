@@ -34,6 +34,8 @@ struct xns_gcframe{
     struct xns_gcframe *prev, *next;
 };
 
+typedef void (*xns_condition_callback)(struct xns_vm *vm, char *reason, xns_obj obj);
+
 // An XNS-Lisp Virtual machine: different VM's should be independent of each other.
 // xns_vm is NOT currently threadsafe
 struct xns_vm{
@@ -64,11 +66,14 @@ struct xns_vm{
         size_t min_size;
         size_t used;
         int allocs;
+        int numGCs;
         void *current_heap;
         void *old_heap;
     } heap;
     bool gc_active;
     FILE *debug;
+    xns_condition_callback error;
+    xns_condition_callback warning;
 };
 
 /**

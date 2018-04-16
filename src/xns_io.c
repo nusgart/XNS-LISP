@@ -37,6 +37,7 @@ char *xns_to_string(xns_obj object){
                 as_len = asprintf(&desc, "%f", object->dval);
                 if(as_len == -1){
                     //TODO error
+                    object->vm->error(object->vm, "Out of memory when attempting to stringize double!", NULL);
                 }
                 return desc;
             case XNS_PRIMITIVE:
@@ -48,10 +49,14 @@ char *xns_to_string(xns_obj object){
                 as_len = asprintf(&desc, "%ld", object->fixnum);
                 if(as_len == -1){
                     //TODO error
+                    object->vm->error(object->vm, "Out of memory when attempting to stringize fixnum!", NULL);
                 }
                 return desc;
             case XNS_STRING:
                 as_len = asprintf(&desc, "\"%s\"", object->string);
+                if (as_len < 0) {
+                    object->vm->error(object->vm, "Out of memory when attempting to pretty-format string!", NULL);
+                }
                 return desc;
             // symbol / gensym
             case XNS_GENSYM:
@@ -65,6 +70,7 @@ char *xns_to_string(xns_obj object){
                 as_len = asprintf(&desc, "(%s . %s)", a1, a2);
                 if(as_len == -1){
                     //TODO error
+                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize cons cell!", NULL);
                 }
                 free(a1); free(a2);
                 return desc;
@@ -80,6 +86,7 @@ char *xns_to_string(xns_obj object){
                 free(tmp);
                 if(len == (size_t)-1){
                     //TODO error
+                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize list!", NULL);
                 }
                 free(o);
                 if(xns_nil(obj->cdr)) break;
@@ -90,6 +97,7 @@ char *xns_to_string(xns_obj object){
                     free(tm2);
                     if(as_len == -1){
                         //TODO error
+                        obj->vm->error(obj->vm, "Out of memory when attempting to stringize dotted list end!", NULL);
                     }
                     free(o);
                     return desc;
@@ -115,6 +123,7 @@ char *xns_to_string(xns_obj object){
                 as_len = asprintf(&res, fmt, desc);
                 if(as_len == -1){
                     //TODO error
+                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize moved object!", NULL);
                 }
                 free(desc);
                 return res;
@@ -146,6 +155,7 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
         car = xns_read_file(vm, fp);
         if(!car){
             // TODO error
+            vm->error(vm, "List not terminated by end of file (or read error happened)", list);
             break;
         }
         // handle list end
@@ -156,8 +166,10 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
         // handle dotted pair
         if(xns_eq(car, vm->Dot)){
             cdr = xns_read_file(vm, fp);
-            if(! xns_eq(xns_read_file(vm, fp), vm->Rparen)){
+            xns_obj last = xns_read_file(vm, fp);
+            if(! xns_eq(last, vm->Rparen)){
                 // TODO error
+                vm->error(vm, "More than one object follows . in list", last);
             }
             xns_obj end = list;
             list = xns_nreverse(list);

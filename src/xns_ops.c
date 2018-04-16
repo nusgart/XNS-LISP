@@ -112,6 +112,7 @@ xns_object *xns_car(xns_obj obj){
             return obj;
         }
         // TODO error
+        obj->vm->error(obj->vm, "xns_car called on non-cons object", obj);
         return NULL;
     }
     return obj->car;
@@ -123,6 +124,7 @@ xns_object *xns_cdr(xns_obj obj){
             return obj;
         }
         // TODO error
+        obj->vm->error(obj->vm, "xns_cdr called on non-cons object", obj);
         return NULL;
     }
     return obj->cdr;
@@ -130,6 +132,14 @@ xns_object *xns_cdr(xns_obj obj){
 xns_object *xns_cons(xns_vm *vm, xns_obj car, xns_obj cdr){
     xns_gc_register(vm, &car);
     xns_gc_register(vm, &cdr);
+    ptrdiff_t diff = (char*)car - (char*)vm->heap.current_heap;
+    if(diff < 0 || diff > vm->heap.size){
+        //
+        vm->warning(vm, "xns_cons: object is out of bounds!", NULL);
+        fprintf(stderr, "xns_cons %p probable fail\n", car);
+        fflush(stderr);
+        vm->error(vm, "xns_cons: object out of bounds", car);
+    }
     xns_obj obj = xns_alloc_object(vm, XNS_CONS, 2 * sizeof(xns_obj ));
     obj->car = car;
     obj->cdr = cdr;
@@ -176,7 +186,10 @@ xns_object *xns_append(xns_obj x, xns_obj y){
 
 size_t xns_len(xns_obj list){
     // hopefully this will prevent problems
-    if (list->type != XNS_CONS) return 0;
+    if (list->type != XNS_CONS){
+        list->vm->error(list->vm, "xns_len called on non-cons object", list);
+        return 0;
+    }
     size_t len = 0;
     while(!xns_nil(list)){
         list = list->cdr;
