@@ -34,6 +34,7 @@ xns_object *xns_prim_apply  (struct xns_vm *vm, xns_obj env, xns_obj args);
 // control
 xns_object *xns_prim_let    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cond   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_while  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_lambda (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_mlambda (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_labels (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -58,6 +59,9 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_minus  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_mult   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_lesser (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_greater (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_equal  (struct xns_vm *vm, xns_obj env, xns_obj args);
 /// basic ops
 xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_abs    (struct xns_vm *vm, xns_obj env, xns_obj args);

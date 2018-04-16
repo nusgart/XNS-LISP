@@ -16,6 +16,16 @@
 (define + plus)
 (define - minus)
 (define / divide)
+(define < lesser)
+(define > greater)
+(define = equal)
+(defun != (a b)
+    (not (equal a b)))
+(defun <= (a b)
+    (or (< a b) (= a b)))
+
+(defun >= (a b)
+    (or (< a b) (= a b)))
 ;; mathematical constants -- self documenting
 (define +pi+ 3.141592653589793)
 (define +pi/2+ 1.57079632679489661923)

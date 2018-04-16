@@ -167,6 +167,25 @@ xns_object *xns_prim_cond   (struct xns_vm *vm, xns_obj env, xns_obj args){
     return vm->NIL;
 }
 
+xns_object *xns_prim_while (struct xns_vm *vm, xns_obj env, xns_obj args){
+    xns_obj pred = args->car;
+    xns_obj code = args->cdr;
+    R(pred); R(code);
+    bool cont = (eval(pred, env) != vm->NIL);
+    while(cont){
+        xns_obj cc = code;
+        R(cc);
+        while(!xns_nil(cc)){
+            eval(cc->car, env);
+            cc = cc->cdr;
+        }
+        U(cc);
+        cont = (eval(pred, env) != vm->NIL);
+    }
+    U(pred); U(code);
+    return vm->NIL;
+}
+
 xns_object *xns_prim_lambda (struct xns_vm *vm, xns_obj env, xns_obj args){
     return xns_make_function(vm, args->car, args->cdr, env);
 }

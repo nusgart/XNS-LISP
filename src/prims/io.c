@@ -29,3 +29,4 @@ xns_object *xns_prim_load   (struct xns_vm *vm, xns_obj env, xns_obj args){
     fclose(fp);
     return vm->T;
 }
+

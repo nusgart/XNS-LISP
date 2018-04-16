@@ -15,6 +15,10 @@
  */
 // XNS-Lisp arithmetic operator implementation
 #include "xns_lisp.h"
+
+#define R(a) xns_gc_register(vm, &a)
+#define U(a) xns_gc_unregister(vm, &a)
+
 //numbers
 /// arith ops
 xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
@@ -264,4 +268,61 @@ xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args){
     U(args);
     U(env);
     return ret;
+}
+// greater/lesser
+xns_object *xns_prim_greater  (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 1){
+        return vm->NIL;
+    }
+    R(args); R(env);
+    xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
+    R(arg1);
+    xns_obj arg2 = xns_to_double(vm, eval(args->cdr->car, env));
+    if(xns_nil(arg1) || xns_nil(arg2)){
+        return vm->T;
+    }
+    U(env); U(args); U(arg1);
+    if(arg1->dval > arg2->dval){
+        return vm->T;
+    } else { 
+        return vm->NIL;
+    }
+}
+
+xns_object *xns_prim_lesser  (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 2){
+        return vm->NIL;
+    }
+    R(args); R(env);
+    xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
+    R(arg1);
+    xns_obj arg2 = xns_to_double(vm, eval(args->cdr->car, env));
+    if(xns_nil(arg1) || xns_nil(arg2)){
+        return vm->T;
+    }
+    U(env); U(args); U(arg1);
+    if(arg1->dval < arg2->dval){
+        return vm->T;
+    } else { 
+        return vm->NIL;
+    }
+}
+
+xns_object *xns_prim_equal  (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 2){
+        return vm->T;
+    }
+    R(args); R(env);
+    xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
+    R(arg1);
+    xns_obj arg2 = xns_to_double(vm, eval(args->cdr->car, env));
+    if(xns_nil(arg1) || xns_nil(arg2)){
+        return vm->T;
+    }
+    U(env); U(args); U(arg1);
+    if(arg1->dval == arg2->dval){
+        return vm->T;
+    } else { 
+        return vm->NIL;
+    }
 }
