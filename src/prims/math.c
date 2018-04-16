@@ -96,12 +96,12 @@ M(asinh);
 M(acosh);
 M(atanh);
 
-// multi-arguement ones
+// multi-argument functions
 #define M2(x) xns_object *xns_prim_ ## x (struct xns_vm *vm, xns_obj env, xns_obj args){\
-    if (xns_len(args) != 1)return vm->T;\
+    if (xns_len(args) != 2)return vm->T;\
     R(args); R(env);\
     xns_obj arg1 = xns_to_double(vm, eval(args->car, env));R(arg1);\
-    xns_obj arg2 = xns_to_double(vm, eval(args->car, env));\
+    xns_obj arg2 = xns_to_double(vm, eval(args->cdr->car, env));\
     if(xns_nil(arg1)||xns_nil(arg2)) return vm->T;\
     U(args); U(env); U(arg1);\
     double res = x (arg1->dval, arg2->dval);\
