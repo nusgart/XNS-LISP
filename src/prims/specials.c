@@ -76,6 +76,26 @@ xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args){
     U(val); U(sym); U(args); U(env);
     return val;
 }
+/// WIP DO NOT USE YET!!!
+xns_object *xns_prim_setf   (struct xns_vm *vm, xns_obj env, xns_obj args){
+    R(env); R(args);
+    xns_obj val = eval(args->cdr->car, env);
+    xns_obj sym = NULL;
+    if(args->car->type == XNS_SYMBOL || args->car->type == XNS_GENSYM){
+        sym = args->car;
+        R(sym); R(val);
+        xns_set(env, sym, val);    
+    }else {
+        // XXX FIXME  THIS IS A BROKEN APPROACH: WORKS FOR CERTAIN THINGS, BUT NOT EVERYTHING
+        // TODO: EITHER MAKE EVERYTHING WORK ON HANDLES, MOVE THIS INTO LISP, OR SOMETHING ELSE
+        sym = eval(args->car, env);
+        R(sym); R(val);
+        sym->type = XNS_HANDLE;
+        sym->ptr = val;
+    }
+    U(val); U(sym); U(args); U(env);
+    return val;
+}
 
 xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(args);
