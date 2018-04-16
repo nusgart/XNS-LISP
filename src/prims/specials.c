@@ -235,7 +235,7 @@ xns_object *xns_prim_car    (struct xns_vm *vm, xns_obj env, xns_obj args){
         vm->error(vm, "car called with too many arguments", args);
     }
     (void) vm;
-    return eval(args->car, env)->car;
+    return xns_car(eval(args->car, env));
 }
 xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(!xns_nil(args->cdr)){
@@ -243,7 +243,7 @@ xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args){
         vm->error(vm, "cdr called with too many arguments", args);
     }
     (void) vm;
-    return eval(args->car, env)->car;
+    return xns_cdr(eval(args->car, env));
 }
 xns_object *xns_prim_cons   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(xns_len(args) != 2){
