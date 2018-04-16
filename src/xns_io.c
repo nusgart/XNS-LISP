@@ -146,6 +146,7 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
         car = xns_read_file(vm, fp);
         if(!car){
             // TODO error
+            break;
         }
         // handle list end
         if(xns_eq(car, vm->Rparen)){
