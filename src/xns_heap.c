@@ -121,8 +121,11 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
     }
     vm->gc_active = true;
     // ensure the new heap is large enough
-    if(newsize < vm->heap.used) {
+    if (newsize < vm->heap.used) {
         newsize = vm->heap.used + 2;
+    }
+    if (newsize < vm->heap.min_size) {
+        newsize = vm->heap.min_size;
     }
     fprintf(vm->debug, "Heap sizes old=%lu, new=%lu used=%lu\n", vm->heap.size, newsize, vm->heap.used);
     vm->heap.old_heap = vm->heap.current_heap;
