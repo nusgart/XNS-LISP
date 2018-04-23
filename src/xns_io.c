@@ -63,19 +63,6 @@ char *xns_to_string(xns_obj object){
             case XNS_GENSYM:
             case XNS_SYMBOL:
                 return strdup(object->symname);
-            /// forward the pointers contained by these types
-            #ifdef BAD_PRINT
-            case XNS_CONS:
-                a1 = xns_to_string(object->car);
-                a2 = xns_to_string(object->cdr);
-                as_len = asprintf(&desc, "(%s . %s)", a1, a2);
-                if(as_len == -1){
-                    //TODO error
-                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize cons cell!", NULL);
-                }
-                free(a1); free(a2);
-                return desc;
-            #else
             case XNS_CONS:
                 desc = strdup("(");
                 xns_obj obj = object;
@@ -86,7 +73,6 @@ char *xns_to_string(xns_obj object){
                     len = asprintf(&desc, "%s%s ", desc, tmp);
                     free(tmp);
                     if(len == (size_t)-1){
-                        //TODO error
                         obj->vm->error(obj->vm, "Out of memory when attempting to stringize list!", NULL);
                     }
                     free(o);
@@ -97,7 +83,6 @@ char *xns_to_string(xns_obj object){
                         as_len = asprintf(&desc, "%s. %s)", desc, xns_to_string(obj->cdr));
                         free(tm2);
                         if(as_len == -1){
-                            //TODO error
                             obj->vm->error(obj->vm, "Out of memory when attempting to stringize dotted list end!", NULL);
                         }
                         free(o);
@@ -107,7 +92,6 @@ char *xns_to_string(xns_obj object){
                 }
                 desc[len - 1] = ')';
                 return desc;
-            #endif
             case XNS_FUNCTION:
                 lm = xns_cons(object->vm, object->args, object->body);
                 xns_gc_register(object->vm, &lm);
@@ -181,7 +165,6 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
     while(true){
         car = xns_read_file(vm, fp);
         if(!car){
-            // TODO error
             vm->error(vm, "List not terminated by end of file (or read error happened)", list);
             break;
         }
@@ -195,7 +178,6 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
             cdr = xns_read_file(vm, fp);
             xns_obj last = xns_read_file(vm, fp);
             if(! xns_eq(last, vm->Rparen)){
-                // TODO error
                 vm->error(vm, "More than one object follows . in list", last);
             }
             xns_obj end = list;
@@ -210,7 +192,86 @@ static xns_object *xns_read_list(struct xns_vm *vm, FILE*fp){
     xns_gc_unregister(vm, &list);
     return list;
 }
-// read an object from memory -- TODO implement these
+// windows is probably not going to work anyways...
+#if defined(NEED_FMEMOPEN) || defined(__APPLE__) || defined(__WINDOWS__)
+#include <unistd.h>
+struct xns_priv_cookie{
+    char *mem;
+    size_t off;
+    size_t len;
+    int flags;
+};
+static ssize_t cread(void *cook, char *buf, size_t size){
+    xns_priv_cookie *cookie = cook;
+    if (cookie->off >= cookie->len) {
+        return 0;
+    }
+    if(cookie->off + size > cookie->len){
+        size = cookie->len - cookie->off;
+    }
+    memcpy(buf, cookie->mem + cookie->off, size);
+    cookie->off += size;
+    return size;
+}
+
+static ssize_t cwrite(void *cook, char *buf, size_t size){
+    xns_priv_cookie *cookie = cook;
+    if (cookie->off >= cookie->len) {
+        return 0;
+    }
+    if(cookie->off + size > cookie->len){
+        size = cookie->len - cookie->off;
+    }
+    memcpy(cookie->mem + cookie->off, buf, size);
+    cookie->off += size;
+    return size;
+}
+
+static int cseek(void *cook, off64_t *off, int whence){
+    if (whence == SEEK_END || !off){
+        return -1;
+    }
+    xns_priv_cookie *ck = cook;
+    if (whence == SEEK_SET){
+        if(*off > ck->len){
+            *off = ck->len;
+        }
+        ck->off = *off;
+        return 0;
+    }
+    if (whence == SEEK_CUR) {
+        if (ck->off + *off > ck->len){
+            *off = ck->len;
+        } else *off += ck->off;
+        ck->off = *off;
+        return 0;
+    }
+    // invalid seek
+    return -1;
+}
+
+static int cclose(void *cook){
+    free(cook);
+}
+
+FILE *fmemopen(void *mem, size_t len, const char *mode){
+    xns_priv_cookie *cookie = calloc(sizeof(xns_priv_cookie), 1);
+    cookie->mem = mem;
+    cookie->len = len;
+    cookie->flags = ~0;
+    // if(strstr(flags, "r")){
+    //     cookie.flags |= O_RDONLY;
+    // } // TODO implement flags
+
+    cookie_io_functions_t ck = {};
+    ck.read = cread;
+    ck.write = cwrite;
+    ck.close = cclose;
+    ck.seek = cseek;
+}
+#endif
+
+// read an object from memory 
 xns_object *xns_read_memory(struct xns_vm *vm,char *memory, size_t length){
     FILE *file = fmemopen(memory, length, "r");
     xns_obj obj = xns_read_file(vm, file);

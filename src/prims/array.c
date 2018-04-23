@@ -20,8 +20,8 @@
 #define U(a) xns_gc_unregister(vm, &a)
 
 xns_object *xns_prim_length (struct xns_vm *vm, xns_obj env, xns_obj args){
-    if (!xns_nil(args->cdr)){
-        vm->error(vm, "Too many arguments passed to length", args);
+    if (xns_len(args) != 1){
+        vm->error(vm, "Wrong number of arguments passed to length", args);
     }
     xns_obj arg = eval(args->car, env);
     size_t len = xns_len(arg);

@@ -14,7 +14,7 @@
   limitations under the License.
  */
 #include "xns_lisp.h"
-#include <histedit.h>
+//#include <histedit.h>
 #include <assert.h>
 #define NOBJ 8//1024
 int main(int argc, char**argv){
@@ -68,7 +68,7 @@ int main(int argc, char**argv){
 
     memset((void*)objects, 0, sizeof(objects));
     xns_load_stdlib(vm);
-    // RPL -- READ PRINT LOOP (It's only missing EVAL!)
+    // REPL -- READ EVAL PRINT LOOP
     while(!feof(stdin)){
         printf("> ");
         xns_obj rdobj = xns_read_file(vm, stdin);
@@ -77,9 +77,6 @@ int main(int argc, char**argv){
         }
         xns_gc_register(vm, &rdobj);
         xns_obj ev = eval(rdobj, vm->toplevel_env);
-        #ifdef MEGADEBUG
-        xns_print_object(rdobj);
-        #endif
         xns_print_object(ev);
     }
     printf("\n");

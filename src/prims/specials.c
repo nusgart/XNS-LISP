@@ -91,26 +91,6 @@ xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args){
     U(val); U(sym); U(args); U(env);
     return val;
 }
-/// WIP DO NOT USE YET!!!
-xns_object *xns_prim_setf   (struct xns_vm *vm, xns_obj env, xns_obj args){
-    R(env); R(args);
-    xns_obj val = eval(args->cdr->car, env);
-    xns_obj sym = NULL;
-    if(args->car->type == XNS_SYMBOL || args->car->type == XNS_GENSYM){
-        sym = args->car;
-        R(sym); R(val);
-        xns_set(env, sym, val);    
-    }else {
-        // XXX FIXME  THIS IS A BROKEN APPROACH: WORKS FOR CERTAIN THINGS, BUT NOT EVERYTHING
-        // TODO: EITHER MAKE EVERYTHING WORK ON HANDLES, MOVE THIS INTO LISP, OR SOMETHING ELSE
-        sym = eval(args->car, env);
-        R(sym); R(val);
-        sym->type = XNS_HANDLE;
-        sym->ptr = val;
-    }
-    U(val); U(sym); U(args); U(env);
-    return val;
-}
 
 xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(args);
@@ -270,7 +250,6 @@ xns_object *xns_prim_labels  (struct xns_vm *vm, xns_obj env, xns_obj args){
 // Cons Cells
 xns_object *xns_prim_car    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(!xns_nil(args->cdr)){
-        // TODO ERROR
         vm->error(vm, "car called with too many arguments", args);
     }
     (void) vm;
@@ -278,7 +257,6 @@ xns_object *xns_prim_car    (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(!xns_nil(args->cdr)){
-        // TODO ERROR
         vm->error(vm, "cdr called with too many arguments", args);
     }
     (void) vm;
@@ -286,8 +264,7 @@ xns_object *xns_prim_cdr    (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 xns_object *xns_prim_cons   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if(xns_len(args) != 2){
-        // TODO ERROR
-        vm->error(vm, "cons called with too many arguments", args);
+        vm->error(vm, "cons called with an incorrect number of arguments", args);
     }
     R(env);
     R(args);
@@ -298,8 +275,7 @@ xns_object *xns_prim_cons   (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 xns_object *xns_prim_pair   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
-        // TODO ERROR
-        vm->error(vm, "pair called with too many arguments", args);
+        vm->error(vm, "pair called with an incorrect number of arguments", args);
         return vm->NIL;
     }
     R(env);
@@ -317,6 +293,9 @@ xns_object *xns_prim_pair   (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 
 xns_object *xns_prim_setcar(struct xns_vm *vm, xns_obj env, xns_obj args){
+    if(xns_len(args) != 2){
+        vm->error(vm, "setcdr called with the wrong number of arguments", args);
+    }
     R(env); R(args);
     xns_obj val = eval(args->cdr->car, env);
     R(val);
@@ -325,8 +304,8 @@ xns_object *xns_prim_setcar(struct xns_vm *vm, xns_obj env, xns_obj args){
     if (cons->type == XNS_CONS) {
         cons->car = val;
     } else {
-        //TODO ERROR
         vm->error(vm, "setcar called with wrong argument type", cons);
+        U(val); U(cons); U(args); U(env);
         return vm->NIL;
     }
     U(val); U(cons); U(args); U(env);
@@ -334,6 +313,9 @@ xns_object *xns_prim_setcar(struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 
 xns_object *xns_prim_setcdr(struct xns_vm *vm, xns_obj env, xns_obj args){
+    if(xns_len(args) != 2){
+        vm->error(vm, "setcdr called with the wrong number of arguments", args);
+    }
     R(env); R(args);
     xns_obj val = eval(args->cdr->car, env);
     R(val);
@@ -342,8 +324,8 @@ xns_object *xns_prim_setcdr(struct xns_vm *vm, xns_obj env, xns_obj args){
     if (cons->type == XNS_CONS) {
         cons->cdr = val;
     } else {
-        //TODO ERROR
         vm->error(vm, "setcdr called with wrong argument type", cons);
+        U(val); U(cons); U(args); U(env);
         return vm->NIL;
     }
     U(val); U(cons); U(args); U(env);
@@ -352,8 +334,7 @@ xns_object *xns_prim_setcdr(struct xns_vm *vm, xns_obj env, xns_obj args){
 
 xns_object *xns_prim_append (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
-        // TODO ERROR
-        vm->error(vm, "append called with too many arguments", args);
+        vm->error(vm, "append called with an incorrect number of arguments", args);
         return vm->NIL;
     }
     R(env);
@@ -371,9 +352,8 @@ xns_object *xns_prim_append (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 //Predicates
 xns_object *xns_prim_atom   (struct xns_vm *vm, xns_obj env, xns_obj args){
-    if (!xns_nil(args->cdr)){
-        // TODO ERROR
-        vm->error(vm, "atom called with too many arguments", args);
+    if (xns_len(args) != 1){
+        vm->error(vm, "atom called with an incorrect number of arguments", args);
         return vm->NIL;
     }
     xns_obj o = eval(args->car, env);

@@ -39,8 +39,7 @@ xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size)
             hs += size;
         }
         // this actually gives us more free space
-        xns_vm_gc(vm, 2 * vm->heap.used);
-        //xns_vm_gc(vm, 2 * vm->heap.used); // enabling second gc SHOULD allow the heap to contract
+        xns_vm_gc(vm, hs);
     }
     xns_obj obj = (struct xns_object*)(vm->heap.current_heap+vm->heap.used);
     obj->size = size;

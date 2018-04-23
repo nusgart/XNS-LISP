@@ -58,8 +58,7 @@ xns_object *xns_prim_or     (struct xns_vm *vm, xns_obj env, xns_obj args){
 }
 xns_object *xns_prim_not    (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){
-        // TODO ERROR
-        vm->error(vm, "null called with too many arguments", args);
+        vm->error(vm, "not called with too many arguments", args);
         return vm->NIL;
     }
     xns_obj expr = eval(args->car, env);

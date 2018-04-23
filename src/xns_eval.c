@@ -34,7 +34,7 @@ xns_object *eval(xns_obj obj, xns_obj env){
         // lookup symbol value
         case XNS_GENSYM:
         case XNS_SYMBOL:
-            // check for self-evaluating
+            // check for self-evaluating symbols
             if(obj->symname[0] == ':')
                 return obj;
             return xns_assoc(env, obj);
@@ -49,20 +49,14 @@ xns_object *eval(xns_obj obj, xns_obj env){
         //////// critical case: CONS
         case XNS_CONS:
             // This differs from the paper in that the primitives are not implemented inline
-            // and to allow for this, the arguements ARE NOT EVALUATED!
-            ;char *desc = xns_to_string(obj);
-            fprintf(vm->debug, "APPLYING FCN %s -- %s", obj->car->symname, desc);
-            free(desc);
+            // and to allow for this, the arguments aren't evaluated here.
             R(obj); R(env);
             xns_obj val = eval(obj->car, env);
             R(val);
-            desc = xns_to_string(val);
-            fprintf(vm->debug, " value %s\n", desc);
-            free(desc);
             xns_obj ret = apply(val, env, obj->cdr);
             U(obj); U(env); U(val);
             ptrdiff_t diff = (char*)ret - (char*)vm->heap.current_heap;
-            // this assumes that the heap is smaller than PTRDIFF_MAX chars, which is enforced.
+            // this assumes that the heap is smaller than PTRDIFF_MAX chars, which is enforced by the GC.
             if(diff < 0 || diff > (ptrdiff_t)vm->heap.size){
                 vm->warning(vm, "xns_eval: object is out of bounds!", obj);
                 fprintf(stderr, "xns_eval %p probable fail\n", ret);
@@ -72,7 +66,7 @@ xns_object *eval(xns_obj obj, xns_obj env){
             return ret;
         default:
             // ??? -- should this error?
-            vm->error(vm, "Bad object type in eval", obj);
+            vm->warning(vm, "Bad object type in eval", obj);
             return obj;
     }
     vm->error(vm, "Eval executing an unreachable segment", NULL);
@@ -83,6 +77,7 @@ xns_object *evlis(xns_obj obj, xns_obj env){
         // TODO either error or better warning
         char *desc = xns_to_string(obj);
         fprintf(stderr, "WARNING: evlis on non-cons object %u with type %s value %s\n", obj->object_id, xns_type_to_string(obj->type), desc);
+        obj->vm->warning(obj->vm, "evlis on non-cons object", obj);
         free(desc);
         return obj;
     }
@@ -102,40 +97,23 @@ xns_object *macroexpand(xns_obj fn, xns_obj env, xns_obj args){
     R(fn); R(env); R(args);
     xns_obj newenv = xns_make_env(fn->vm, fn->env);
     R(newenv);
-    #ifndef NO_REST
-    {
-        xns_obj key = fn->args, val = args;
-        R(key); R(val);
-        for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
-            if(key->type != XNS_CONS){
-                //TODO ERROR
-                fprintf(stderr, "INVALID FUNCTION SIGNATURE!!!!!!\n");
-                abort();
-            }
-            if (val->type != XNS_CONS){
-                fprintf(stderr, "INVALID FUNCTION SIGNATURE!!!!!!\n");
-                abort();
-            }
-            if(xns_eq(key->car, fn->vm->rest)){
-                xns_set(newenv, key->cdr->car, val);
-                break;
-            }
-            xns_set(newenv, key->car, val->car);
+    xns_obj key = fn->args, val = args;
+    R(key); R(val);
+    for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
+        if(xns_eq(key->car, fn->vm->rest)){
+            xns_set(newenv, key->cdr->car, val);
+            break;
         }
-        U(key); U(val);
+        xns_set(newenv, key->car, val->car);
     }
-    #else
-    newenv->vars = xns_pair(fn->args, args);
-    #endif
-    //xns_obj expansion = eval(fn->body, newenv);
+    U(key); U(val);
     xns_obj ip = fn->body, ret = vm->NIL;
-        R(ip); R(ret);
-        while(!xns_nil(ip)){
-            ret = eval(ip->car, newenv);
-            ip = ip->cdr;
-        }
-        U(ip); U(ret);
-    //xns_obj ret = eval(expansion, env);
+    R(ip); R(ret);
+    while(!xns_nil(ip)){
+        ret = eval(ip->car, newenv);
+        ip = ip->cdr;
+    }
+    U(ip); U(ret);
     U(fn); U(env); U(args); U(newenv);
     return ret;
 }
@@ -150,23 +128,19 @@ xns_object *apply(xns_obj fn, xns_obj env, xns_obj args){
         R(fn); R(env); R(args);
         xns_obj newenv = xns_make_env(fn->vm, fn->env);
         xns_gc_register(fn->vm, &newenv);
-        #ifndef NO_REST
-        {
-            xns_obj evarg = evlis(args, env);
-            xns_obj key = fn->args, val = evarg;
-            R(key); R(val);
-            for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
-                if(xns_eq(key->car, fn->vm->rest)){
-                    xns_set(newenv, key->cdr->car, val);
-                    break;
-                }
-                xns_set(newenv, key->car, val->car);
+        xns_obj evarg = evlis(args, env);
+        xns_obj key = fn->args, val = evarg;
+        // process arguments
+        R(key); R(val);
+        for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
+            if(xns_eq(key->car, fn->vm->rest)){
+                xns_set(newenv, key->cdr->car, val);
+                break;
             }
-            U(key); U(val);
+            xns_set(newenv, key->car, val->car);
         }
-        #else
-        newenv->vars = xns_pair(fn->args, evlis(args, env));
-        #endif
+        U(key); U(val);
+        // evaluate the function
         xns_obj ip = fn->body, ret = vm->NIL;
         R(ip); R(ret);
         while(!xns_nil(ip)){
@@ -177,11 +151,12 @@ xns_object *apply(xns_obj fn, xns_obj env, xns_obj args){
         U(fn); U(env); U(args); U(newenv);
         return ret;
     } else if (fn->type == XNS_MACRO) {
-        // hopefully this works ...
         xns_gc_register(fn->vm, &fn);
         xns_gc_register(fn->vm, &args);
         xns_obj expansion = macroexpand(fn, env, args);
+        #if DEBUG
         printf("EXPANSION ");xns_print_object(expansion);
+        #endif
         xns_obj ret = eval(expansion, env);
         xns_gc_unregister(fn->vm, &fn);
         xns_gc_unregister(fn->vm, &args);
@@ -197,7 +172,8 @@ xns_object *apply(xns_obj fn, xns_obj env, xns_obj args){
         unsigned int id = fn->object_id;
         char *type = xns_type_to_string(fn->type);
         char *desc = xns_to_string(fn);
-        fprintf(stderr, "Apply called on non-function object (id %u type %s value %s!\n", id, type, desc);
+        fprintf(stderr, "Apply called on non-function object (id %u type %s value %s_!\n", id, type, desc);
+        fn->vm->error(fn->vm, "Apply called on non-function object!\n", fn);
         free(desc);
         return fn;
     }
