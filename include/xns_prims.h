@@ -74,6 +74,7 @@ xns_object *xns_prim_sqrt   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cbrt   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_hypot  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_expt   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_exp    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_pow    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_log    (struct xns_vm *vm, xns_obj env, xns_obj args);
 /// advanced ops

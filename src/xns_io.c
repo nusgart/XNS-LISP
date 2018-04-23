@@ -23,6 +23,7 @@ char *xns_to_string(xns_obj object){
     //TODO finish implementing
     char *desc, *fmt, *res;
     int as_len=0;
+    xns_obj lm = NULL;
     if(!object) return strdup("#<NULLPTR>");
     switch(object->type){
         case XNS_INVL:
@@ -216,6 +217,7 @@ xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
     while (true){
         int c;
         st: c = getc(fp);
+        if (ferror(fp)) return NULL;
         if(isspace(c) || iscntrl(c)){ continue;}
         switch(c){
             case EOF:

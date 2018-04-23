@@ -114,13 +114,17 @@ xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(key);
     xns_obj list = eval(args->cdr->car, env);
     xns_obj rtn = vm->NIL;
+    if (list->type != XNS_CONS) {
+        goto error;
+    }
     while(!xns_nil(list)){
-        if (xns_eq(key, list->car->car)){
+        if (xns_eq(key, list->car->car)) {
             rtn = list->car;
             break;
         }
         list = list->cdr;
     }
+    error:
     U(key); U(args); U(env);
     return rtn;
 }

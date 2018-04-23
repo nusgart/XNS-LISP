@@ -49,17 +49,20 @@ xns_object *eval(xns_obj obj, xns_obj env){
         case XNS_CONS:
             // This differs from the paper in that the primitives are not implemented inline
             // and to allow for this, the arguements ARE NOT EVALUATED!
-            fprintf(stdout, "APPLYING FCN %s -- ", obj->car->symname);
-            xns_print_object(obj);
+            ;char *desc = xns_to_string(obj);
+            fprintf(vm->debug, "APPLYING FCN %s -- %s", obj->car->symname, desc);
+            free(desc);
             R(obj); R(env);
             xns_obj val = eval(obj->car, env);
             R(val);
-            printf(" value ");
-            xns_print_object(val);
+            desc = xns_to_string(val);
+            fprintf(vm->debug, " value %s\n", desc);
+            free(desc);
             xns_obj ret = apply(val, env, obj->cdr);
             U(obj); U(env); U(val);
             ptrdiff_t diff = (char*)ret - (char*)vm->heap.current_heap;
-            if(diff < 0 || diff > vm->heap.size){
+            // this assumes that the heap is smaller than PTRDIFF_MAX chars, which is enforced.
+            if(diff < 0 || diff > (ptrdiff_t)vm->heap.size){
                 vm->warning(vm, "xns_eval: object is out of bounds!", obj);
                 fprintf(stderr, "xns_eval %p probable fail\n", ret);
                 fflush(stderr);
@@ -123,9 +126,7 @@ xns_object *macroexpand(xns_obj fn, xns_obj env, xns_obj args){
     #else
     newenv->vars = xns_pair(fn->args, args);
     #endif
-    xns_obj expansion = eval(fn->body, newenv);
-    printf("))expansion ");
-    xns_print_object(expansion);
+    //xns_obj expansion = eval(fn->body, newenv);
     xns_obj ip = fn->body, ret = vm->NIL;
         R(ip); R(ret);
         while(!xns_nil(ip)){

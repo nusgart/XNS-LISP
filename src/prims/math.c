@@ -22,11 +22,13 @@
 /// basic ops
 xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){
+        vm->error(vm, "isnan called with an incorrect number of arguments", args);
         return vm->T;
     }
     R(args); R(env);
     xns_obj arg = xns_to_double(vm, eval(args->car, env));
     if(xns_nil(arg)){
+        vm->error(vm, "mod called with a non-numeric argument", args);
         return vm->T;
     }
     U(env); U(args);
@@ -35,7 +37,10 @@ xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_obj env, xns_obj args){
     return vm->NIL;
 }
 xns_object *xns_prim_expt  (struct xns_vm *vm, xns_obj env, xns_obj args){
-    if (xns_len(args) != 1)return vm->T;
+    if (xns_len(args) != 2){
+        vm->error(vm, "expt called with an incorrect number of arguments", args);
+        return vm->T;
+    }
     R(args); R(env);
     xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
     R(arg1);
@@ -45,7 +50,8 @@ xns_object *xns_prim_expt  (struct xns_vm *vm, xns_obj env, xns_obj args){
     return xns_make_double(vm, pow(arg1->dval, arg2->dval));
 }
 xns_object *xns_prim_mod  (struct xns_vm *vm, xns_obj env, xns_obj args){
-    if (xns_len(args) != 1){
+    if (xns_len(args) != 2){
+        vm->error(vm, "mod called with an incorrect number of arguments", args);
         return vm->T;
     }
     R(args); R(env);
@@ -73,6 +79,7 @@ M(expm1);
 M(cbrt);
 M(log);
 M(erf);
+M(exp);
 M(erfc);
 M(gamma);
 M(lgamma);

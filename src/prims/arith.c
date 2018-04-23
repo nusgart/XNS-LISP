@@ -47,6 +47,9 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
             case XNS_RATIONAL:
                 type = XNS_RATIONAL;
                 break;
+            case XNS_STRING:
+                type = XNS_STRING;// special case of +
+                break;
             default:
                 // TODO ERROR
                 break;
@@ -68,6 +71,18 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
                 dsum += xns_to_double(vm, a->car)->dval;
             }
             ret = xns_make_double(vm, dsum);
+            break;
+        case XNS_STRING:;
+            char *out = strdup(""), *tmp = NULL;
+            for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
+                char *desc;
+                if(a->car->type != XNS_STRING) desc = xns_to_string(a->car);
+                else desc = strdup(a->car->string);
+                asprintf(&tmp, "%s%s", out, desc);
+                free(desc); free(out);
+                out = tmp;
+            }
+            ret = xns_make_string(vm, out);
             break;
         case XNS_RATIONAL:
         case XNS_INTEGER:
@@ -243,7 +258,15 @@ xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args){
             long lsum = 0;
             bool aaa = true;
             for(xns_obj a = ns; !xns_nil(a); a = a->cdr){
-                lsum = (aaa) ? a->car->fixnum: lsum / a->car->fixnum;
+                if(aaa){
+                    lsum = a->car->fixnum;
+                } else {
+                    if (a->car->fixnum == 0){
+                        vm->error(vm, "Integer division by Zero!", args);
+                        goto error;
+                    }
+                    lsum /= a->car->fixnum;;
+                }
                 aaa = false;
             }
             ret = xns_make_fixnum(vm, lsum);
@@ -263,6 +286,7 @@ xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args){
             break;
         default: break;//TODO ERROR
     }
+    error:
     U(ret);
     U(ns);
     U(args);

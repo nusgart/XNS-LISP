@@ -133,7 +133,7 @@ xns_object *xns_cons(xns_vm *vm, xns_obj car, xns_obj cdr){
     xns_gc_register(vm, &car);
     xns_gc_register(vm, &cdr);
     ptrdiff_t diff = (char*)car - (char*)vm->heap.current_heap;
-    if(diff < 0 || diff > vm->heap.size){
+    if(diff < 0 || diff > (ptrdiff_t)vm->heap.size){
         //
         vm->warning(vm, "xns_cons: object is out of bounds!", NULL);
         fprintf(stderr, "xns_cons %p probable fail\n", car);
@@ -141,6 +141,9 @@ xns_object *xns_cons(xns_vm *vm, xns_obj car, xns_obj cdr){
         vm->error(vm, "xns_cons: object out of bounds", car);
     }
     xns_obj obj = xns_alloc_object(vm, XNS_CONS, 2 * sizeof(xns_obj ));
+    if (obj > car && ((char*)obj - (char*)car) < (ptrdiff_t)car->size){
+        vm->error(vm, "xns_cons: object overwritten!!!", car);
+    }
     obj->car = car;
     obj->cdr = cdr;
     xns_gc_unregister(vm, &car);
@@ -215,7 +218,7 @@ xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value){
 }
 xns_object *xns_make_string(struct xns_vm *vm, char *value){
     size_t len = strlen(value) + 1;
-    xns_obj obj = xns_alloc_object(vm, XNS_STRING, len);
+    xns_obj obj = xns_alloc_object(vm, XNS_STRING, sizeof(size_t) + len);
     strncpy(obj->string, value, len);
     obj->string[len-1] = 0;
     obj->len = len-1;

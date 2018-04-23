@@ -181,6 +181,7 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
             // nothing in the new heap should have been moved out yet!!!
             case XNS_MOVED:
                 fprintf(vm->debug, "OBJECT ALREADY MOVED!!! %d!\n", vm->scan1->type);
+                fprintf(stderr, "OBJECT ALREADY MOVED!!! %d!\n", vm->scan1->type);
                 abort();
             default:
                 fprintf(vm->debug, "INVALID OBJECT TYPE %d!\n", vm->scan1->type);
