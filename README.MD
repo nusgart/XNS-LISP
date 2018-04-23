@@ -9,6 +9,7 @@ XNS-Lisp is a Lisp 1 that will otherwise be somewhat similar to Common Lisp. It
 uses CheneyGC for its garbage collector, which means that it is a precise GC --
 so if you want to interface with it using C, see the handle API (or the root
 pointer registration API, which is more complicated and harder to use).
+
 ## License
 Copyright 2018- Nicholas Nusgart, All Rights Reserved
 

@@ -10,7 +10,12 @@
 			"xns_lisp.h": "c",
 			"math.h": "c",
 			"cmath": "c",
-			"functional": "c"
+			"functional": "c",
+			"chrono": "cpp",
+			"ratio": "cpp",
+			"system_error": "cpp",
+			"type_traits": "cpp",
+			"array": "c"
 		}
 	},
 	

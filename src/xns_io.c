@@ -76,40 +76,49 @@ char *xns_to_string(xns_obj object){
                 return desc;
             #else
             case XNS_CONS:
-            desc = strdup("(");
-           xns_obj obj = object;
-            size_t len = 0;
-            while(true){
-                char *o = desc;
-                char *tmp = xns_to_string(obj->car);
-                len = asprintf(&desc, "%s%s ", desc, tmp);
-                free(tmp);
-                if(len == (size_t)-1){
-                    //TODO error
-                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize list!", NULL);
-                }
-                free(o);
-                if(xns_nil(obj->cdr)) break;
-                if(obj->cdr->type != XNS_CONS){
-                    o = desc;
-                    char *tm2 = xns_to_string(obj->cdr);
-                    as_len = asprintf(&desc, "%s . %s)", desc, xns_to_string(obj->cdr));
-                    free(tm2);
-                    if(as_len == -1){
+                desc = strdup("(");
+                xns_obj obj = object;
+                size_t len = 0;
+                while(true){
+                    char *o = desc;
+                    char *tmp = xns_to_string(obj->car);
+                    len = asprintf(&desc, "%s%s ", desc, tmp);
+                    free(tmp);
+                    if(len == (size_t)-1){
                         //TODO error
-                        obj->vm->error(obj->vm, "Out of memory when attempting to stringize dotted list end!", NULL);
+                        obj->vm->error(obj->vm, "Out of memory when attempting to stringize list!", NULL);
                     }
                     free(o);
-                    return desc;
+                    if(xns_nil(obj->cdr)) break;
+                    if(obj->cdr->type != XNS_CONS){
+                        o = desc;
+                        char *tm2 = xns_to_string(obj->cdr);
+                        as_len = asprintf(&desc, "%s. %s)", desc, xns_to_string(obj->cdr));
+                        free(tm2);
+                        if(as_len == -1){
+                            //TODO error
+                            obj->vm->error(obj->vm, "Out of memory when attempting to stringize dotted list end!", NULL);
+                        }
+                        free(o);
+                        return desc;
+                    }
+                    obj = obj->cdr;
                 }
-                obj = obj->cdr;
-            }
-            desc[len - 1] = ')';
-            return desc;
+                desc[len - 1] = ')';
+                return desc;
             #endif
             case XNS_FUNCTION:
+                lm = xns_cons(object->vm, object->args, object->body);
+                xns_gc_register(object->vm, &lm);
+                lm = xns_cons(object->vm, xns_intern(object->vm, "lambda"), lm);
+                xns_gc_unregister(object->vm, &lm);
+                return xns_to_string(lm);
             case XNS_MACRO:
-                return xns_to_string(object->body);
+                lm = xns_cons(object->vm, object->args, object->body);
+                xns_gc_register(object->vm, &lm);
+                lm = xns_cons(object->vm, xns_intern(object->vm, "mlambda"), lm);
+                xns_gc_unregister(object->vm, &lm);
+                return xns_to_string(lm);
             case XNS_ENV:
                 // TODO print a list of variables and the values bound to them
                 res = xns_to_string(object->vars);
@@ -257,22 +266,22 @@ xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
             }
             do{
                 buffer[idx++] = c;
-                if(idx == currsize){
+                if (idx == currsize) {
                     buffer = realloc(buffer, 2 * currsize);
                     memset(buffer+currsize, 0, currsize);
                     currsize *= 2;
                 }
-                if(c == '.' || (base < 14 && (c == 'e' || c == 'E') ) || (base == 16 && (c == 'p' || c == 'P'))){
+                if( c == '.' || (base < 14 && (c == 'e' || c == 'E') ) || (base == 16 && (c == 'p' || c == 'P'))) {
                     isfloat = true;
                 }
                 c = getc(fp);
-            } while(isdigit(c) || (base == 16 && strchr("AaBbCcDdEeFfPp", c)) || c == 'e' || c == 'E' || c == '.');
+            } while (isdigit(c) || (base == 16 && strchr("AaBbCcDdEeFfPp", c)) || c == 'e' || c == 'E' || c == '.');
             ungetc(c, fp);
             xns_gc_register(vm, &obj);
-            if(isfloat){
+            if (isfloat) {
                 double d = strtod(buffer, NULL);
                 obj = xns_make_double(vm, d);
-            }else{
+            } else {
                 long l = strtol(buffer, NULL, base);
                 obj = xns_make_fixnum(vm, l);
             }

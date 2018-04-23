@@ -72,7 +72,9 @@ int main(int argc, char**argv){
         }
         xns_gc_register(vm, &rdobj);
         xns_obj ev = eval(rdobj, vm->toplevel_env);
+        #ifdef MEGADEBUG
         xns_print_object(rdobj);
+        #endif
         xns_print_object(ev);
     }
     printf("\n");

@@ -32,7 +32,10 @@ xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_eval   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_apply  (struct xns_vm *vm, xns_obj env, xns_obj args);
+// type
+xns_object *xns_prim_typeof (struct xns_vm *vm, xns_obj env, xns_obj args);
 // control
+xns_object *xns_prim_progn  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_let    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cond   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_while  (struct xns_vm *vm, xns_obj env, xns_obj args);

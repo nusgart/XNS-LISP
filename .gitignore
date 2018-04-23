@@ -3,3 +3,4 @@
 /xns_lisp
 /src/prims/primops.inc
 /src/typestr.inc
+/src/prims/types.inc

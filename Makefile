@@ -1,7 +1,7 @@
 ### Copyright 2018 - Nicholas Nusgart
 ### XNS-Lisp Makefile
 CFLAGS=-std=gnu11 -O0 -g -Iinclude -Wall -Wextra
-PRIMOBJ=src/prims/specials.o src/prims/math.o src/prims/io.o src/prims/arith.o src/prims/logic.o
+PRIMOBJ=src/prims/specials.o src/prims/math.o src/prims/io.o src/prims/arith.o src/prims/logic.o src/prims/type.o
 OBJECTS=src/main.o src/xns_heap.o src/xns_ops.o src/xns_vm.o src/xns_io.o $(PRIMOBJ) src/xns_eval.o
 
 .PHONY: all clean
@@ -13,12 +13,16 @@ src/typestr.inc: include/xns_obj.h Makefile
 		| grep -v '^\s*//' | cut -d '=' -f 1 | tr -d ' ,' | (echo "char *xns_type_strs[] = { ";\
 		sed 's/$$/",/g' | sed 's/^/  "/g'; echo "};") > src/typestr.inc
 
+src/prims/types.inc: src/typestr.inc
+	sed 's/XNS_/:/g' <src/typestr.inc | sed 's/xns_type_strs/xns_types/g' > src/prims/types.inc
+
 src/prims/primops.inc: include/xns_prims.h Makefile
 	for i in `grep xns_object include/xns_prims.h  | cut -d ' ' -f 2 | tr -d '*'` ;do\
 	       echo "    "rp\(vm, \"`echo -n $$i | sed s/xns_prim_//g`\", $$i\)\; ;\
 	done > src/prims/primops.inc
 
 src/prims/specials.o: src/prims/primops.inc
+src/prims/type.o: src/prims/types.inc
 
 src/xns_io.o: src/typestr.inc
 

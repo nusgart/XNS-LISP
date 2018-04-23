@@ -13,20 +13,21 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  */
-// XNS-Lisp primitive IO functions
-// these are really builtins
+// XNS Type primitives
+// 
 #include "xns_lisp.h"
 
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
 
-xns_object *xns_prim_load   (struct xns_vm *vm, xns_obj env, xns_obj args){
-    xns_obj res = eval(args->car, env);
-    size_t len = res->len;
-    char *name = strndup(res->string, len);
-    FILE *fp = fopen(name, "r");
-    xns_load_file(vm, vm->env, fp);
-    fclose(fp);
-    return vm->T;
-}
+#include "types.inc"
 
+xns_object *xns_prim_typeof (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 1){
+        vm->error(vm, "typeof called with too many arguments", args);
+        return vm->NIL;
+    }
+    xns_obj arg = eval(args->car, env);
+    char *type = xns_types[arg->type];
+    return xns_intern(vm, type);
+}

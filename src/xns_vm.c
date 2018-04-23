@@ -22,6 +22,7 @@ static void xns_error(struct xns_vm *vm, char *reason, xns_obj object){
     if(object){
         free(desc);
     }
+    (void)vm;
     //TODO more?
 }
 
@@ -31,6 +32,7 @@ static void xns_warning(struct xns_vm *vm, char *reason, xns_obj object){
     if(object){
         free(desc);
     }
+    (void) vm;
     //TODO more?
 }
 

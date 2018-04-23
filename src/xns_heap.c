@@ -31,6 +31,9 @@ xns_object *xns_alloc_object(struct xns_vm *vm, enum xns_type type, size_t size)
     fprintf(vm->debug, "Allocating object of size %lu type %s (%d)\n", size, xns_type_to_string(type), type);
     // todo implement heap reclamation
     if(vm->heap.used + size > vm->heap.size){
+        #ifndef NO_HEAP_RECLAIM
+        xns_vm_gc(vm, vm->heap.used);
+        #endif
         size_t hs = vm->heap.used << 1;
         if(hs < vm->heap.used + size){
             hs += size;
@@ -114,6 +117,7 @@ static void _xns_forward_roots(struct xns_vm *vm){
 // trigger a garbage collection -- don't call this on your own! 
 void xns_vm_gc(struct xns_vm *vm, size_t newsize){
     fprintf(vm->debug, "Collecting Garbage!\n");
+    fprintf(stderr, "Collecting Garbage\n");
     xns_print_heap(vm);
     if(vm->gc_active){
         // todo error
@@ -126,6 +130,11 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
     }
     if (newsize < vm->heap.min_size) {
         newsize = vm->heap.min_size;
+    }
+    // sanity check
+    if(newsize > PTRDIFF_MAX){
+        fprintf(stderr, "XNS_Lisp: new heap size %lu exceeded PTRDIFF_MAX (%ld) !!!", newsize, PTRDIFF_MAX);
+        abort();
     }
     fprintf(vm->debug, "Heap sizes old=%lu, new=%lu used=%lu\n", vm->heap.size, newsize, vm->heap.used);
     vm->heap.old_heap = vm->heap.current_heap;
