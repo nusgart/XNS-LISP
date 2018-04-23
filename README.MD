@@ -30,15 +30,18 @@ limitations under the License.
   to put as few restrictions as possible on XNS-LISP.  Hence, I license XNS-LISP
   under the Apache 2.0 License.  
 ## TODO: (Neccesary things/tools/...)
-* List structured memory -- Mostly done 
-* Garbage collection  -- CheneyGC implemented
-* Environment handling -- initial 
+* List structured memory -- done.  Implementation is robust against everything except memory corruption (ususally from out of bounds writes).
+* Garbage collection  -- CheneyGC implemented, works, but is demanding of C code unless handles are used
+* GC handles -- most of the code is unaware of handles.
+* Environment handling -- initial, lexical scoping implemented 
 * S-Expression I/O -- both input & output (still fragile)
-* Source file loading -- the reader can read from any FILE*
-* EVAL/APPLY/EVALIS -- initial implementation, seems to work
-* Primitives -- In progress: core primitives initially implemented, math&IO still in progress (still thinking about OS interface)
-* REPL -- Mostly TODO
-* Standard Library -- TODO (need EVAL/APPLY/EVALIS, Primitives, and Source file loading first) (need to consider how to bundle this...)
+* Source file loading -- done.
+* EVAL/APPLY/EVALIS -- implementation is maturing but still fragile.
+* Primitives -- Mostly done with core primitives, math is done, IO is in progress (still thinking about OS interface)
+* REPL -- Initial implementation, no history or line editing yet.
+* Standard Library -- initial implementation (need to consider how to bundle this...)
+* Implement backquote: writing macros without it is really irritating
+* fmemopen replacement for Mac OS and the BSDs.
 ## Authors:
 * Nicholas Nusgart <nicknusgart@gmail.com>
 

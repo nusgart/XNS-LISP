@@ -14,6 +14,7 @@
   limitations under the License.
  */
 #include "xns_lisp.h"
+#include <histedit.h>
 #include <assert.h>
 #define NOBJ 8//1024
 int main(int argc, char**argv){
@@ -61,6 +62,10 @@ int main(int argc, char**argv){
     for(int i = 0 ; i < NOBJ+1; i++){
         xns_gc_unregister(vm, &objects[i]);
     }
+
+    ///libedit init
+    //EditLine *el = el_init(*argv, stdin, stdout, stderr);
+
     memset((void*)objects, 0, sizeof(objects));
     xns_load_stdlib(vm);
     // RPL -- READ PRINT LOOP (It's only missing EVAL!)
