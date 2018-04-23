@@ -50,6 +50,10 @@ xns_object *xns_prim_setcar (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_cons   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_pair   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_append (struct xns_vm *vm, xns_obj env, xns_obj args);
+// array
+xns_object *xns_prim_length (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_aref   (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_setf$aref (struct xns_vm *vm, xns_obj env, xns_obj args);
 //Predicates
 xns_object *xns_prim_atom   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_and    (struct xns_vm *vm, xns_obj env, xns_obj args);

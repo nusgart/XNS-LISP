@@ -189,8 +189,10 @@ xns_object *xns_append(xns_obj x, xns_obj y){
 
 size_t xns_len(xns_obj list){
     // hopefully this will prevent problems
-    if (list->type != XNS_CONS){
-        list->vm->error(list->vm, "xns_len called on non-cons object", list);
+    if (list->type == XNS_STRING || list->type == XNS_ARRAY) {
+        return list->len;
+    } else if (list->type != XNS_CONS){
+        list->vm->error(list->vm, "Argument to xns_len is not a sequence (either a list, a string, or an array).", list);
         return 0;
     }
     size_t len = 0;
@@ -222,6 +224,13 @@ xns_object *xns_make_string(struct xns_vm *vm, char *value){
     strncpy(obj->string, value, len);
     obj->string[len-1] = 0;
     obj->len = len-1;
+    return obj;
+}
+xns_object *xns_make_array(struct xns_vm *vm, size_t len){
+    size_t arrlen = sizeof(xns_obj*) * len;
+    xns_obj obj = xns_alloc_object(vm, XNS_ARRAY, sizeof(size_t) + arrlen);
+    memset((void*)obj->array, 0, arrlen);
+    obj->length = len; // length and len are aliases
     return obj;
 }
 xns_object *xns_make_function(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){

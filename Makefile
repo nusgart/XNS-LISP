@@ -1,7 +1,7 @@
 ### Copyright 2018 - Nicholas Nusgart
 ### XNS-Lisp Makefile
 CFLAGS=-std=gnu11 -O0 -g -Iinclude -Wall -Wextra
-PRIMOBJ=src/prims/specials.o src/prims/math.o src/prims/io.o src/prims/arith.o src/prims/logic.o src/prims/type.o
+PRIMOBJ=src/prims/specials.o src/prims/math.o src/prims/io.o src/prims/arith.o src/prims/logic.o src/prims/type.o src/prims/array.o
 OBJECTS=src/main.o src/xns_heap.o src/xns_ops.o src/xns_vm.o src/xns_io.o $(PRIMOBJ) src/xns_eval.o
 
 .PHONY: all clean

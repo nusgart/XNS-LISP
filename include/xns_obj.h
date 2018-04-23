@@ -55,7 +55,9 @@ typedef enum xns_type{
   // a pointer to a foreign object
   XNS_FOREIGN_PTR,
   // allow normal C code to interact with xns_objects -- partially implemented
-  XNS_HANDLE
+  XNS_HANDLE,
+  // an array of xns_objects
+  XNS_ARRAY
 }  xns_type;
 
 /**
@@ -107,6 +109,11 @@ struct xns_object{
     struct{
         size_t len;
         char string[];
+    };
+    // array
+    struct {
+        size_t length;
+        xns_obj array[];
     };
     // rational -- unimplemented -- will change
     void *rational_implementation;

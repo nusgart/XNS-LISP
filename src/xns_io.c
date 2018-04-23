@@ -127,6 +127,23 @@ char *xns_to_string(xns_obj object){
                 asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
                 free(res); free(fmt);
                 return desc;
+            case XNS_ARRAY:
+                fmt = "#(%s)";
+                desc = strdup("");
+                char *sep = "";
+                assert(offsetof(xns_object, length) == offsetof(xns_object, len));
+                for(size_t idx = 0; idx < object->length; idx++){
+                    char *d = xns_to_string(object->array[idx]);
+                    asprintf(&res, "%s%s%s", desc, sep, d);
+                    free(d);
+                    free(desc);
+                    sep = " ";
+                    desc = res;
+                    res = NULL;
+                }
+                asprintf(&res, "#(%s)", desc);
+                free(desc);
+                return res;
             case XNS_MOVED:
                 fmt = "Moved Object --> [%s]";
                 desc = xns_to_string(object->ptr);
@@ -228,6 +245,32 @@ xns_object *xns_read_file(struct xns_vm *vm, FILE *fp){
                     if(c == EOF) return NULL;
                 }
                 goto st;
+            // # is the read macro dispatch character, but read macros aren't implemented yet.
+            case '#':
+                if ((c = fgetc(fp)) == '('){
+                    // read array
+                    // this is a little bit of a hack
+                    xns_obj lst = xns_read_list(vm, fp);
+                    xns_gc_register(vm, &lst);
+                    size_t len = xns_len(lst);
+                    xns_obj obj = xns_make_array(vm, len);
+                    xns_obj ptr = lst;
+                    size_t idx = 0;
+                    while(!xns_nil(ptr)){
+                        if(ptr->type != XNS_CONS){
+                            vm->error(vm, "NOT A CONS", ptr);
+                        }
+                        obj->array[idx++] = ptr->car;
+                        ptr = ptr->cdr;
+                    }
+                    xns_gc_unregister(vm, &lst);
+                    return obj;
+                } else {
+                    // not an array: set things back to they were before until read macros are implemented.
+                    ungetc(c, fp);
+                    c = '#';
+                    break;
+                }
             case '(':
                 return xns_read_list(vm, fp);
             case ')':

@@ -178,6 +178,12 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
                 vm->scan1->vars = _xns_forward(vm, vm->scan1->vars);
                 vm->scan1->parent = _xns_forward(vm, vm->scan1->parent);
                 break;
+            case XNS_ARRAY:
+                fprintf(vm->debug, "Forwarding array\n");
+                for(size_t idx = 0; idx < vm->scan1->length; idx++){
+                    vm->scan1->array[idx] = _xns_forward(vm, vm->scan1->array[idx]);
+                }
+                break;
             // nothing in the new heap should have been moved out yet!!!
             case XNS_MOVED:
                 fprintf(vm->debug, "OBJECT ALREADY MOVED!!! %d!\n", vm->scan1->type);
@@ -185,6 +191,7 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
                 abort();
             default:
                 fprintf(vm->debug, "INVALID OBJECT TYPE %d!\n", vm->scan1->type);
+                fprintf(stderr, "INVALID OBJECT TYPE %d!\n", vm->scan1->type);
                 abort();
         }
         vm->scan1 = (struct xns_object*)((uint8_t*)vm->scan1 +vm->scan1->size);

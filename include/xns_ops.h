@@ -82,7 +82,8 @@ xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value);
 xns_object *xns_make_string(struct xns_vm *vm, char *value);
 xns_object *xns_make_function(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env);
 xns_object *xns_make_macro(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env);
-//xns_obj xns_make_fixnums(struct xns_vm *vm, long value); // this is a template
+xns_object *xns_make_array(struct xns_vm *vm, size_t len);
+//xns_object *xns_make_fixnums(struct xns_vm *vm, long value); // this is a template
 ///////conversion
 xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value);
 xns_object *xns_to_real(struct xns_vm *vm, xns_obj value);

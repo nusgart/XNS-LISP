@@ -45,7 +45,8 @@
 (defun cdadr (x) (cdr (car (cdr x))))
 (defun cddar (x) (cdr (cdr (car x))))
 (defun cdddr (x) (cdr (cdr (cdr x))))
-;; if -- 
+
+;; if -- if condition execute p1 else execute p2.
 (defmacro if (condition p1 &rest p2)
   (list 'cond (list condition p1) (cons T p2)))
 ;; when --> if condition, execute (progn arguments)

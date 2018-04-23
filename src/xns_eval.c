@@ -44,6 +44,7 @@ xns_object *eval(xns_obj obj, xns_obj env){
         case XNS_DOUBLE:
         case XNS_FIXNUM:
         case XNS_STRING:
+        case XNS_ARRAY:
             return obj;
         //////// critical case: CONS
         case XNS_CONS:
