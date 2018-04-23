@@ -25,6 +25,8 @@ xns_object *xns_prim_exit   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_eq     (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_null   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_quote  (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_gensym (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_intern (struct xns_vm *vm, xns_obj env, xns_obj args);
 // environment
 xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_setf   (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -32,6 +34,7 @@ xns_object *xns_prim_define (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_assoc  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_eval   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_apply  (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_macroexpand (struct xns_vm *vm, xns_obj env, xns_obj args);
 // type
 xns_object *xns_prim_typeof (struct xns_vm *vm, xns_obj env, xns_obj args);
 // control

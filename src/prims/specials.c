@@ -66,6 +66,21 @@ xns_object *xns_prim_quote    (struct xns_vm *vm, xns_obj env, xns_obj args){
     (void) vm; (void) env;
     return args->car;
 }
+
+xns_object *xns_prim_gensym (struct xns_vm *vm, xns_obj env, xns_obj args) {
+    (void) env; (void) args;
+    return xns_gensym(vm);
+}
+
+xns_object *xns_prim_intern (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if(xns_len(args) != 1){
+        vm->error(vm, "intern called with an incorrect number of arguments", args);
+        return vm->NIL;
+    }
+    xns_obj str = eval(args->car, env);
+    return xns_intern(vm, str->string);
+}
+
 // environment
 xns_object *xns_prim_set    (struct xns_vm *vm, xns_obj env, xns_obj args){
     R(env); R(args);
@@ -369,4 +384,28 @@ xns_object *xns_prim_atom   (struct xns_vm *vm, xns_obj env, xns_obj args){
         return o;
     }
     return vm->NIL;
+}
+
+xns_object *xns_prim_macroexpand (struct xns_vm *vm, xns_obj env, xns_obj args){
+    R(args); R(env);
+    xns_obj macro = eval(args->car, env);
+    if (macro->type != XNS_MACRO){
+        vm->error(vm, "macroexpand called on non-macro!", args);
+        return vm->NIL;
+    }
+    xns_obj ret = macroexpand(macro, env, args->cdr);
+    U(args); U(env);
+    return ret;
+}
+
+xns_object *xns_prim_progn  (struct xns_vm *vm, xns_obj env, xns_obj args){
+    R(env);
+    xns_obj ip = args, ret = vm->NIL;
+    R(ip); R(ret);
+    while(!xns_nil(ip)){
+        ret = eval(ip->car, env);
+        ip = ip->cdr;
+    }
+    U(ip); U(ret); U(env);
+    return ret;
 }
