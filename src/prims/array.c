@@ -27,6 +27,29 @@ xns_object *xns_prim_length (struct xns_vm *vm, xns_obj env, xns_obj args){
     size_t len = xns_len(arg);
     return xns_make_fixnum(vm, len);
 }
+
+xns_object *xns_prim_makearray(struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 1){
+        vm->error(vm, "Wrong number of arguments passed to makearray", args);
+    }
+    xns_obj arg = eval(args->car, env);
+    if (arg->type != XNS_FIXNUM){
+        vm->error(vm, "Non-fixnum type passed to makearray", arg);
+        return vm->NIL;
+    }
+    if (arg->fixnum < 0){
+        vm->error(vm, "Negative length passed to makearray", arg);
+        return vm->NIL;
+    }
+    size_t len = arg->fixnum;
+    xns_obj ret = xns_make_array(vm, len);
+    // initialize array with NIL's
+    for (int i = 0; i < arg->fixnum; i++) {
+        ret->array[i] = vm->NIL;
+    }
+    return ret;
+}
+
 xns_object *xns_prim_aref   (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 2){
         vm->error(vm, "Wrong number of arguments passed to aref", args);
