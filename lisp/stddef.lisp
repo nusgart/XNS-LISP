@@ -110,3 +110,5 @@
 (define setf$cdr setcdr)
 (defmacro setf$assoc (key lst value)
   (list 'push (cons key value) lst))
+
+;;;; hash map???

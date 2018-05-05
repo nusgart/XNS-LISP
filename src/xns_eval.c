@@ -55,6 +55,7 @@ xns_object *eval(xns_obj obj, xns_obj env){
             R(val);
             xns_obj ret = apply(val, env, obj->cdr);
             U(obj); U(env); U(val);
+            if (!ret)  return vm->NIL;
             ptrdiff_t diff = (char*)ret - (char*)vm->heap.current_heap;
             // this assumes that the heap is smaller than PTRDIFF_MAX chars, which is enforced by the GC.
             if(diff < 0 || diff > (ptrdiff_t)vm->heap.size){

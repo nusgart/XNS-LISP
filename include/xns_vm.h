@@ -34,6 +34,7 @@ struct xns_gcframe{
     struct xns_gcframe *prev, *next;
 };
 
+// callback for a condition (currently error or warning).
 typedef void (*xns_condition_callback)(struct xns_vm *vm, char *reason, xns_obj obj);
 
 // An XNS-Lisp Virtual machine: different VM's should be independent of each other.
@@ -68,12 +69,17 @@ struct xns_vm{
         int allocs;
         int numGCs;
         void *current_heap;
-        void *old_heap;
+        void *old_heap; // do not use, is null except during a GC
     } heap;
     bool gc_active;
     FILE *debug;
     xns_condition_callback error;
     xns_condition_callback warning;
+    /*
+     * Callback information: this is currently unused by default handler, but
+     * perhaps eventually it could be used to implement proper conditions.
+     */
+    void *callback_info;
 };
 
 /**
@@ -90,21 +96,28 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size);
  * code will require this to be loaded - 
  * 
  * The standard library currently includes:
- * * essential utilities (list, fold, reduce)
- * * basic definitions (defmacro, defun, )
- * 
+ * * essential utilities (list, fold, reduce, ...)
+ * * basic definitions (defmacro, defun, while, if, unless, ...)
+ * * some math definitions and functions
  */
 void xns_load_stdlib(struct xns_vm *vm);
 /**
- * Loads a file
+ * Loads a file.
  */
 void xns_load_file(struct xns_vm *vm, xns_obj env, FILE *fp);
 /**
  * Destroys an xns_vm.
  */
 void xns_destroy_vm(struct xns_vm *vm);
-// trigger a garbage collection -- don't call this on your own! 
+/**
+ * Synchronously performs a garbage collection -- don't call this on your own!
+ * The GC will create a new semispace and copy all live objects to it, and then
+ * unmap the old one. As one might sumise, this is expensive, which is why
+ * garbage should be collected as infrequently as possible, especially since
+ * there are no finalizers (dead objects aren't tracked).
+ */
 void xns_vm_gc(struct xns_vm *vm, size_t heapsize);
+
 /************************************************************************************************
  * C Local variable registration API -- you don't want xns_objects moving without you knowing,
  * right? If you don't understand this please just use the handle api.  These functions are
@@ -124,10 +137,12 @@ void xns_vm_gc(struct xns_vm *vm, size_t heapsize);
  * warning about this becuase at least GCC considers it possible for this
  * function to initialize *ptr (even though the type of ptr disallows that) and
  * thus does not issue any warning!
+ *
+ * Secondary note: This function takes O(number of registered variables) time.
  */
 void xns_gc_register(struct xns_vm *vm, xns_obj const*ptr);
 /**
- * Unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC
+ * Unregister a local variable -- if you forget to do this it will corrupt the stack on the next GC!
  */
 void xns_gc_unregister(struct xns_vm *vm, xns_obj const*ptr);
 #endif //XNS_VM_H

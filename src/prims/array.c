@@ -66,13 +66,14 @@ xns_object *xns_prim_setf$aref (struct xns_vm *vm, xns_obj env, xns_obj args){
     xns_obj arr = eval(args->car, env);
     R(arr);
     xns_obj idx = eval(args->cdr->car, env);
-    U(env); U(args); U(arr);
+    
+    // type checking
     if (idx->type != XNS_FIXNUM) {
-        vm->error(vm, "aref index must be a fixnum", idx);
+        vm->error(vm, "setf$aref index must be a fixnum", idx);
         return vm->NIL;
     }
     if(arr->type != XNS_ARRAY && arr->type != XNS_STRING){
-        vm->error(vm, "aref array must be an array or a string", arr);
+        vm->error(vm, "setf$aref array must be an array or a string", arr);
         return vm->NIL;
     }
     long index = idx->fixnum;
@@ -83,8 +84,14 @@ xns_object *xns_prim_setf$aref (struct xns_vm *vm, xns_obj env, xns_obj args){
         free(desc);
         return vm->NIL;
     }
-    if(arr->type == XNS_STRING){
-        return xns_make_fixnum(vm, arr->string[index]);
+    // perform setting
+    xns_obj val = eval(args->cdr->cdr->car, env);
+    if (arr->type == XNS_STRING){
+        val = xns_to_fixnum(vm, val);
+        arr->string[index] = (char)val->fixnum;
+    } else {
+        arr->array[index] = val;
     }
-    return arr->array[index];
+    U(env); U(args); U(arr);
+    return val;
 }
