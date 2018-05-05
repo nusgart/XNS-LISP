@@ -286,3 +286,17 @@ xns_object *xns_to_double(struct xns_vm *vm, xns_obj value){
             return xns_make_double(vm, (double)v);
     }
 }
+
+xns_object *xns_to_fixnum(struct xns_vm *vm, xns_obj value){
+    switch (value->type){
+        default:
+            return vm->NIL;
+        case XNS_INTEGER:
+            // TODO
+            return xns_make_fixnum(vm, (long)value->integer_implementation);
+        case XNS_DOUBLE:
+            return xns_make_fixnum(vm, (long)value->dval);
+        case XNS_FIXNUM:;
+            return value;
+    }
+}

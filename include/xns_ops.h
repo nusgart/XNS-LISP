@@ -85,6 +85,7 @@ xns_object *xns_make_macro(struct xns_vm *vm, xns_obj params, xns_obj body, xns_
 xns_object *xns_make_array(struct xns_vm *vm, size_t len);
 //xns_object *xns_make_fixnums(struct xns_vm *vm, long value); // this is a template
 ///////conversion
+xns_object *xns_to_fixnum(struct xns_vm *vm, xns_obj value);
 xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value);
 xns_object *xns_to_real(struct xns_vm *vm, xns_obj value);
 xns_object *xns_to_double(struct xns_vm *vm, xns_obj value);
