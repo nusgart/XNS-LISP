@@ -19,130 +19,156 @@
 #include <ctype.h>
 #include "xns_lisp.h"
 
+#define R(a) xns_gc_register(vm, &a)
+#define U(a) xns_gc_unregister(vm, &a)
+//TODO use sets to 
 char *xns_to_string(xns_obj object){
     //TODO finish implementing
     char *desc, *fmt, *res;
     int as_len=0;
     xns_obj lm = NULL;
     if(!object) return strdup("#<NULLPTR>");
+    xns_vm *vm = object->vm;
     switch(object->type){
         case XNS_INVL:
-            case XNS_INTEGER:
-            case XNS_RATIONAL:
-                break;
-            case XNS_FOREIGN_FUNC:
-                return strdup ("#<FOREIGN_FCN>");
-            case XNS_FOREIGN_PTR:
-                return strdup("#<FOREIGN_PTR>");
-            case XNS_DOUBLE:
-                as_len = asprintf(&desc, "%f", object->dval);
-                if(as_len == -1){
-                    //TODO error
-                    object->vm->error(object->vm, "Out of memory when attempting to stringize double!", NULL);
+        case XNS_INTEGER:
+        case XNS_RATIONAL:
+            break;
+        case XNS_FOREIGN_FUNC:
+            return strdup ("#<FOREIGN_FCN>");
+        case XNS_FOREIGN_PTR:
+            return strdup("#<FOREIGN_PTR>");
+        case XNS_DOUBLE:
+            as_len = asprintf(&desc, "%f", object->dval);
+            if(as_len == -1){
+                //TODO error
+                vm->error(vm, "Out of memory when attempting to stringize double!", NULL);
+            }
+            return desc;
+        case XNS_PRIMITIVE:
+            return strdup("#<PRIMITIVE>");
+        case XNS_HANDLE:
+            return xns_to_string(object->ptr);
+            break;
+        case XNS_FIXNUM:
+            as_len = asprintf(&desc, "%ld", object->fixnum);
+            if(as_len == -1){
+                //TODO error
+                vm->error(vm, "Out of memory when attempting to stringize fixnum!", NULL);
+            }
+            return desc;
+        case XNS_STRING:
+            as_len = asprintf(&desc, "\"%s\"", object->string);
+            if (as_len < 0) {
+                vm->error(vm, "Out of memory when attempting to pretty-format string!", NULL);
+            }
+            return desc;
+        // symbol / gensym
+        case XNS_GENSYM:
+        case XNS_SYMBOL:
+            return strdup(object->symname);
+        case XNS_CONS:
+            desc = strdup("(");
+            xns_obj obj = object;
+            size_t len = 0;
+            R(obj);
+            R(object);
+            while(true){
+                char *o = desc;
+                char *tmp = xns_to_string(obj->car);
+                len = asprintf(&desc, "%s%s ", desc, tmp);
+                free(tmp);
+                if(len == (size_t)-1){
+                    vm->error(vm, "Out of memory when attempting to stringize list!", NULL);
                 }
-                return desc;
-            case XNS_PRIMITIVE:
-                return strdup("#<PRIMITIVE>");
-            case XNS_HANDLE:
-                return xns_to_string(object->ptr);
-                break;
-            case XNS_FIXNUM:
-                as_len = asprintf(&desc, "%ld", object->fixnum);
-                if(as_len == -1){
-                    //TODO error
-                    object->vm->error(object->vm, "Out of memory when attempting to stringize fixnum!", NULL);
-                }
-                return desc;
-            case XNS_STRING:
-                as_len = asprintf(&desc, "\"%s\"", object->string);
-                if (as_len < 0) {
-                    object->vm->error(object->vm, "Out of memory when attempting to pretty-format string!", NULL);
-                }
-                return desc;
-            // symbol / gensym
-            case XNS_GENSYM:
-            case XNS_SYMBOL:
-                return strdup(object->symname);
-            case XNS_CONS:
-                desc = strdup("(");
-                xns_obj obj = object;
-                size_t len = 0;
-                while(true){
-                    char *o = desc;
-                    char *tmp = xns_to_string(obj->car);
-                    len = asprintf(&desc, "%s%s ", desc, tmp);
-                    free(tmp);
-                    if(len == (size_t)-1){
-                        obj->vm->error(obj->vm, "Out of memory when attempting to stringize list!", NULL);
+                free(o);
+                if(xns_nil(obj->cdr)) break;
+                if(obj->cdr->type != XNS_CONS){
+                    o = desc;
+                    char *tm2 = xns_to_string(obj->cdr);
+                    as_len = asprintf(&desc, "%s. %s)", desc, xns_to_string(obj->cdr));
+                    free(tm2);
+                    if(as_len == -1){
+                        vm->error(vm, "Out of memory when attempting to stringize dotted list end!", NULL);
                     }
+                    U(obj);
+                    U(object);
                     free(o);
-                    if(xns_nil(obj->cdr)) break;
-                    if(obj->cdr->type != XNS_CONS){
-                        o = desc;
-                        char *tm2 = xns_to_string(obj->cdr);
-                        as_len = asprintf(&desc, "%s. %s)", desc, xns_to_string(obj->cdr));
-                        free(tm2);
-                        if(as_len == -1){
-                            obj->vm->error(obj->vm, "Out of memory when attempting to stringize dotted list end!", NULL);
-                        }
-                        free(o);
-                        return desc;
-                    }
-                    obj = obj->cdr;
+                    return desc;
                 }
-                desc[len - 1] = ')';
-                return desc;
-            case XNS_FUNCTION:
-                lm = xns_cons(object->vm, object->args, object->body);
-                xns_gc_register(object->vm, &lm);
-                lm = xns_cons(object->vm, xns_intern(object->vm, "lambda"), lm);
-                xns_gc_unregister(object->vm, &lm);
-                return xns_to_string(lm);
-            case XNS_MACRO:
-                lm = xns_cons(object->vm, object->args, object->body);
-                xns_gc_register(object->vm, &lm);
-                lm = xns_cons(object->vm, xns_intern(object->vm, "mlambda"), lm);
-                xns_gc_unregister(object->vm, &lm);
-                return xns_to_string(lm);
-            case XNS_ENV:
-                // TODO print a list of variables and the values bound to them
-                res = xns_to_string(object->vars);
-                fmt = xns_to_string(object->parent);
-                asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
-                free(res); free(fmt);
-                return desc;
-            case XNS_ARRAY:
-                fmt = "#(%s)";
-                desc = strdup("");
-                char *sep = "";
-                assert(offsetof(xns_object, length) == offsetof(xns_object, len));
-                for(size_t idx = 0; idx < object->length; idx++){
-                    char *d = xns_to_string(object->array[idx]);
-                    asprintf(&res, "%s%s%s", desc, sep, d);
-                    free(d);
-                    free(desc);
-                    sep = " ";
-                    desc = res;
-                    res = NULL;
-                }
-                asprintf(&res, "#(%s)", desc);
-                free(desc);
-                return res;
-            case XNS_MOVED:
-                fmt = "Moved Object --> [%s]";
-                desc = xns_to_string(object->ptr);
-                as_len = asprintf(&res, fmt, desc);
+                obj = obj->cdr;
+            }
+            U(obj);
+            U(object);
+            desc[len - 1] = ')';
+            return desc;
+        case XNS_FUNCTION:
+            R(object);
+            lm = xns_cons(vm, object->args, object->body);
+            R(lm);
+            lm = xns_cons(vm, xns_intern(vm, "lambda"), lm);
+            xns_gc_unregister(vm, &lm);
+            U(lm);
+            U(object);
+            return xns_to_string(lm);
+        case XNS_MACRO:
+            R(object);
+            lm = xns_cons(vm, object->args, object->body);
+            R(lm);
+            lm = xns_cons(vm, xns_intern(vm, "mlambda"), lm);
+            xns_gc_unregister(vm, &lm);
+            U(lm);
+            U(object);
+            return xns_to_string(lm);
+        case XNS_ENV:
+            // TODO print a list of variables and the values bound to them
+            R(object);
+            res = xns_to_string(object->vars);
+            fmt = xns_to_string(object->parent);
+            U(object);
+            asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
+            free(res); free(fmt);
+            return desc;
+        case XNS_ARRAY:
+            desc = strdup("");
+            char *sep = "";
+            R(object);
+            assert(offsetof(xns_object, length) == offsetof(xns_object, len));
+            for(size_t idx = 0; idx < object->length; idx++){
+                char *d = xns_to_string(object->array[idx]);
+                as_len = asprintf(&res, "%s%s%s", desc, sep, d);
                 if(as_len == -1){
-                    //TODO error
-                    obj->vm->error(obj->vm, "Out of memory when attempting to stringize moved object!", NULL);
+                    object->vm->error(object->vm, "Asprintf failed while attempting to stringize array!", NULL);
                 }
+                free(d);
                 free(desc);
-                return res;
-            default:
-                // TODO ERROR
-                return strdup("ERROR UNKNOWN OBJECT TYPE -- MEMORY CORRUPTED!!!!!!!!!!!!!!");
+                sep = " ";
+                desc = res;
+            res = NULL;
+            }
+            U(object);
+            asprintf(&res, "#(%s)", desc);
+            free(desc);
+            return res;
+        case XNS_MOVED:
+            fmt = "Moved Object --> [%s]";
+            R(object);
+            desc = xns_to_string(object->ptr);
+            U(object);
+            as_len = asprintf(&res, fmt, desc);
+            if(as_len == -1){
+                //TODO error
+                object->vm->error(object->vm, "Out of memory when attempting to stringize moved object!", NULL);
+            }
+            free(desc);
+            return res;
+        default:
+            // TODO ERROR
+            return strdup("ERROR UNKNOWN OBJECT TYPE -- MEMORY CORRUPTED!!!!!!!!!!!!!!");
     }
-    return NULL;
+    char *ret = NULL;
+    asprintf(&ret, "#<Stringizing object at %p (type %s, length %lu)", object, xns_type_to_string(object->type), object->len);
+    return ret;
 }
 
 #include "typestr.inc"

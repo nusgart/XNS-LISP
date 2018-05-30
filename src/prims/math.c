@@ -65,6 +65,7 @@ xns_object *xns_prim_mod  (struct xns_vm *vm, xns_obj env, xns_obj args){
     double res = fmod(arg1->dval, arg2->dval);
     return xns_make_double(vm, res);
 }
+
 #define M(x) xns_object * xns_prim_ ## x (struct xns_vm *vm, xns_obj env, xns_obj args){\
     if (xns_len(args) != 1)return vm->T;\
     R(args); R(env);\
@@ -81,6 +82,12 @@ M(log);
 M(erf);
 M(exp);
 M(erfc);
+#if defined(__GNUC__) && !defined(__GLIBC__)
+// fix for musl -- this is somewhat excessive, but musl has no define.
+static inline double gamma(double x){
+    return __builtin_gamma(x);
+}
+#endif
 M(gamma);
 M(lgamma);
 M(j0);
