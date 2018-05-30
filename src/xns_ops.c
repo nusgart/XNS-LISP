@@ -91,7 +91,24 @@ xns_object *xns_assoc(xns_obj env, xns_obj sym){
     }
     return xns_assoc(env->parent, sym);
 }
+
 xns_object *xns_set(xns_obj env, xns_obj sym, xns_obj value){
+    xns_obj currEnv = env;
+    while(!xns_nil(currEnv)){
+        xns_obj curr = currEnv->vars;
+        while (!xns_nil(curr)){
+            if (xns_eq(curr->car->car, sym)){
+                curr->car->cdr = value;
+                return curr->car;
+            }
+            curr = curr->cdr;
+        }
+        currEnv = currEnv->parent;
+    }
+    return xns_bind(env, sym, value);
+}
+
+xns_object *xns_bind(xns_obj env, xns_obj sym, xns_obj value){
     xns_gc_register(env->vm, &env);
     xns_gc_register(env->vm, &sym);
     xns_gc_register(env->vm, &value);
@@ -272,6 +289,13 @@ xns_object *xns_make_double(struct xns_vm *vm, double value){
     obj->dval = value;
     return obj;
 }
+
+xns_object *xns_make_integer(struct xns_vm *vm, long value){
+    (void) value;
+    xns_obj obj = xns_alloc_object(vm, XNS_INTEGER, 256);
+    return obj;
+}
+
 xns_object *xns_make_primitive(struct xns_vm *vm, xns_primitive value){
     xns_obj obj = xns_alloc_object(vm, XNS_PRIMITIVE, sizeof(xns_primitive));
     obj->primitive = value;
@@ -322,11 +346,15 @@ xns_object *xns_make_macro(struct xns_vm *vm, xns_obj params, xns_obj body, xns_
 
 /// CONVERSION
 xns_object *xns_to_integer(struct xns_vm *vm, xns_obj value){
-    (void) value;
-    return vm->NIL; // TODO IMPLEMENT
-    /*switch(value->type){
+    switch(value->type){
         case XNS_FIXNUM:
-    }*/
+            return xns_make_integer(vm, value->fixnum);
+        case XNS_INTEGER:
+            return value;
+        default:
+            break;
+    }
+    return vm->NIL;
 }
 xns_object *xns_to_real(struct xns_vm *vm, xns_obj value){
     (void) value;

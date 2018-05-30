@@ -23,7 +23,7 @@ static void rp(struct xns_vm *vm, char *name, xns_primitive op){
     xns_obj obj = xns_make_primitive(vm, op);
     xns_gc_register(vm, &obj);
     xns_obj n = xns_intern(vm, name);
-    xns_set(vm->env, n, obj);
+    xns_bind(vm->env, n, obj);
     xns_gc_unregister(vm, &obj);
 }
 
@@ -151,7 +151,7 @@ xns_object *xns_prim_let    (struct xns_vm *vm, xns_obj env, xns_obj args){
         xns_obj o = vpairs->car;
         R(o);
         xns_obj val = eval(o->cdr->car, env);
-        xns_set(newenv, o->car, val);
+        xns_bind(newenv, o->car, val);
         U(o);
         vpairs = vpairs->cdr;
     }
@@ -228,7 +228,7 @@ xns_object *xns_prim_labels  (struct xns_vm *vm, xns_obj env, xns_obj args){
         xns_obj o = vpairs->car;
         R(o);
         xns_obj val = eval(o->cdr->car, newenv);
-        xns_set(newenv, o->car, val);
+        xns_bind(newenv, o->car, val);
         U(o);
         vpairs = vpairs->cdr;
     }

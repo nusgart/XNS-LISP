@@ -58,6 +58,7 @@ bool xns_nil(xns_obj obj);
 xns_object *xns_make_env(xns_vm *vm, xns_obj parent);
 xns_object *xns_assoc(xns_obj env, xns_obj sym);
 xns_object *xns_set(xns_obj env, xns_obj sym, xns_obj value);
+xns_object *xns_bind(xns_obj env, xns_obj sym, xns_obj value);
 // Cons Cells
 xns_object *xns_car(xns_obj obj);
 xns_object *xns_cdr(xns_obj obj);

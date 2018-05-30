@@ -102,10 +102,10 @@ xns_object *macroexpand(xns_obj fn, xns_obj env, xns_obj args){
     R(key); R(val);
     for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
         if(xns_eq(key->car, fn->vm->rest)){
-            xns_set(newenv, key->cdr->car, val);
+            xns_bind(newenv, key->cdr->car, val);
             break;
         }
-        xns_set(newenv, key->car, val->car);
+        xns_bind(newenv, key->car, val->car);
     }
     U(key); U(val);
     xns_obj ip = fn->body, ret = vm->NIL;
@@ -135,10 +135,10 @@ xns_object *apply(xns_obj fn, xns_obj env, xns_obj args){
         R(key); R(val);
         for(; !xns_nil(key) && !xns_nil(val); key = key->cdr, val = val->cdr){
             if(xns_eq(key->car, fn->vm->rest)){
-                xns_set(newenv, key->cdr->car, val);
+                xns_bind(newenv, key->cdr->car, val);
                 break;
             }
-            xns_set(newenv, key->car, val->car);
+            xns_bind(newenv, key->car, val->car);
         }
         U(key); U(val);
         // evaluate the function

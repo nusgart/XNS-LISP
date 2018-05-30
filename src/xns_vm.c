@@ -97,10 +97,10 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
     vm->rest = xns_intern(vm, "&rest");
     xns_gc_register(vm, &vm->rest);
     // setup global environment
-    xns_set(vm->env, vm->NIL, vm->NIL);
-    xns_set(vm->env, vm->T, vm->T);
-    xns_set(vm->env, vm->NIL, vm->NIL);
-    xns_set(vm->env, vm->rest, vm->rest);
+    xns_bind(vm->env, vm->NIL, vm->NIL);
+    xns_bind(vm->env, vm->T, vm->T);
+    xns_bind(vm->env, vm->NIL, vm->NIL);
+    xns_bind(vm->env, vm->rest, vm->rest);
     // the top level environment is for user-defined code (user here means anything other than the XNS Lisp implementation).
     vm->toplevel_env = xns_make_env(vm, vm->env);
     xns_gc_register(vm, &vm->toplevel_env);
