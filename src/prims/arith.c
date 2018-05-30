@@ -47,8 +47,9 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
             case XNS_RATIONAL:
                 type = XNS_RATIONAL;
                 break;
+            /// As a special case, the + operator also supports strings (concatenates)
             case XNS_STRING:
-                type = XNS_STRING;// special case of +
+                type = XNS_STRING;
                 break;
             default:
                 // TODO ERROR
@@ -332,21 +333,34 @@ xns_object *xns_prim_lesser  (struct xns_vm *vm, xns_obj env, xns_obj args){
     }
 }
 
-xns_object *xns_prim_equal  (struct xns_vm *vm, xns_obj env, xns_obj args){
-    if (xns_len(args) != 2){
-        return vm->T;
+xns_object *xns_numequal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2){
+    (void)env;
+    R(arg1); R(arg2);
+    xns_obj darg1 = xns_to_double(vm, arg1);
+    R(darg1);
+    xns_obj darg2 = xns_to_double(vm, arg2);
+    if(xns_nil(darg1) || xns_nil(darg2)){
+        return vm->NIL;
     }
-    R(args); R(env);
-    xns_obj arg1 = xns_to_double(vm, eval(args->car, env));
-    R(arg1);
-    xns_obj arg2 = xns_to_double(vm, eval(args->cdr->car, env));
-    if(xns_nil(arg1) || xns_nil(arg2)){
-        return vm->T;
-    }
-    U(env); U(args); U(arg1);
-    if(arg1->dval == arg2->dval){
+    U(arg1); U(arg2); U(darg1);
+    if(darg1->dval == darg2->dval){
         return vm->T;
     } else { 
         return vm->NIL;
     }
+}
+
+xns_object *xns_prim_numequal  (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 2){
+        return vm->T;
+    }
+    R(args); R(env);
+    xns_obj arg1 = eval(args->car, env);
+    R(arg1);
+    xns_obj arg2 = eval(args->cdr->car, env);
+    if(xns_nil(arg1) || xns_nil(arg2)){
+        return vm->T;
+    }
+    U(env); U(args); U(arg1);
+    return xns_numequal(vm, env, arg1, arg2);
 }

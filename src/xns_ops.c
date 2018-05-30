@@ -187,6 +187,65 @@ xns_object *xns_append(xns_obj x, xns_obj y){
     return o;
 }
 
+/// modified djb hash function
+unsigned long xns_hash(xns_obj obj){
+    // follow pointer chain to direct object
+    while (obj->type == XNS_MOVED || obj->type == XNS_HANDLE){
+        obj = obj->ptr;
+    }
+    // symbols
+    if(obj->type == XNS_SYMBOL || obj->type == XNS_GENSYM){
+        return obj->symid;
+    }
+    unsigned long hash = 0x693f7257; // randomly chosen starting value.
+    if (obj->type == XNS_FOREIGN_FUNC) {
+        return ((uintptr_t) obj->foreign_fcn) * 33 ^ hash;
+    }
+    // foreign types: just use
+    if (obj->type == XNS_FOREIGN_PTR) {
+        return ((uintptr_t) obj->foreign_pointer) *33 ^ hash;
+    }
+    if (obj->type == XNS_PRIMITIVE) {
+        return ((uintptr_t)obj->primitive) * 33 ^ hash;
+    }
+    if (obj->type == XNS_FUNCTION || obj->type == XNS_MACRO) {
+        return obj->object_id * 33 ^ hash;
+    }
+    // array: take the hashes of the elements
+    if (obj->type == XNS_ARRAY) {
+        hash ^= obj->type;
+        for(size_t idx = 0; idx < obj->length; idx++){
+            hash = hash * 33 ^ xns_hash(obj->array[idx]);
+        }
+        return hash;
+    }
+    // conses: take the hashes of the cars
+    if (obj->type == XNS_CONS) {
+        hash ^= obj->type;
+        while (!xns_nil(obj) && obj->type == XNS_CONS) {
+            hash = hash * 33 ^ xns_hash(obj->car);
+            obj = obj->cdr;
+        }
+        // handle dotted pairs
+        if (!xns_nil(obj)) {
+            hash = hash * 33 ^ xns_hash(obj);
+        }
+        return hash;
+    }
+    // otherwise, hash the object's bytes
+    unsigned char *bytes = (unsigned char *)obj;
+    size_t length = obj->size;
+    if (obj->type == XNS_STRING){
+        hash ^= obj->type;
+        bytes = (unsigned char *)obj->string;
+        length = obj->len;
+    }
+    for(size_t idx = 0; idx < length; idx++){
+        hash = hash * 33 ^ bytes[idx];
+    }
+    return hash;
+}
+
 size_t xns_len(xns_obj list){
     // hopefully this will prevent problems
     if (list->type == XNS_STRING || list->type == XNS_ARRAY) {

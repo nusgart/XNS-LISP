@@ -40,4 +40,5 @@
 (define +ln_10+ 2.30258509299404568402)
 (define +sqrt2+ 1.41421356237309504880)
 (define +sqrt1/2+ 0.70710678118654752440)
-(define +nan+ (asin 2))
+(define +nan+ (atanh -2))
+(define +negnan+ (atanh 2))

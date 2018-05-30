@@ -389,3 +389,74 @@ xns_object *xns_prim_progn  (struct xns_vm *vm, xns_obj env, xns_obj args){
     U(ip); U(ret); U(env);
     return ret;
 }
+extern xns_object *xns_numequal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2);
+xns_object *xns_equal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2){
+    // check for pointer equality or both being nil but one being NULL
+    if (arg1 == arg2 || (xns_nil(arg1) && xns_nil(arg2))) {
+        return vm->T;
+    }
+    // numeric types are handled elsewhere
+    if (arg1->type == XNS_FIXNUM || arg1->type == XNS_DOUBLE || arg1->type == XNS_RATIONAL || arg1->type == XNS_INTEGER){
+        return xns_numequal(vm, env, arg1, arg2);
+    }
+    // check for handles or moved values and follow the pointer to the direct value
+    if (arg1->type == XNS_HANDLE || arg1->type == XNS_MOVED){
+        return xns_equal(vm, env, arg1->ptr, arg2);
+    }
+    if (arg2->type == XNS_HANDLE || arg1->type == XNS_MOVED){
+        return xns_equal(vm, env, arg1, arg2->ptr);
+    }
+    // if arg1 and arg2 are direct and non-numeric, then they must be the same type to be equal.
+    if (arg1->type != arg2->type){
+        return vm->NIL;
+    }
+    switch(arg1->type){
+        case XNS_FUNCTION:
+        case XNS_MACRO:
+        case XNS_ENV:
+        case XNS_PRIMITIVE:
+            return vm->NIL;
+        default:
+            vm->error(vm, "Argument 1 to equal has unknown type", arg1);
+            return vm->NIL;
+        case XNS_GENSYM:
+        case XNS_SYMBOL:
+            return arg2->symid == arg1->symid? vm->T:vm->NIL;
+        case XNS_FOREIGN_FUNC:
+            return arg1->foreign_fcn == arg2->foreign_fcn? vm->T:vm->NIL; 
+        case XNS_FOREIGN_PTR:
+            return arg1->foreign_pointer == arg2->foreign_pointer?vm->T:vm->NIL;
+        // TODO implement checks for self-containing arrays or lists.  This will likely require sets to be implemented.
+        case XNS_ARRAY:
+            if (arg1->len != arg2->len){
+                return false;
+            }
+            for(size_t idx = 0; idx < arg1->len; idx++){
+                xns_object *pred = xns_equal(vm, env, arg1->array[idx], arg2->array[idx]);
+                if (xns_nil(pred)){
+                    return vm->NIL;
+                }
+            }
+            return vm->T;
+        case XNS_CONS:
+            return xns_equal(vm, env, arg1->cdr, arg2->cdr);
+        case XNS_STRING:
+            if (arg1->len == arg2->len && !strncmp(arg1->string, arg2->string, arg1->len)){
+                return vm->T;
+            } else {
+                return vm->NIL;
+            }
+    }
+    return vm->NIL;
+}
+
+xns_object *xns_prim_equal(struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 2){
+        return vm->T;
+    }
+    R(args); R(env);
+    xns_obj arg1 = eval(args->car, env);
+    R(arg1);
+    xns_obj arg2 = eval(args->cdr->car, env);
+    return xns_equal(vm, env, arg1, arg2);
+}

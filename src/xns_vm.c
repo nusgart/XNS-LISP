@@ -110,9 +110,10 @@ struct xns_vm *xns_create_vm(size_t initial_heap_size){
 }
 
 void xns_load_file(struct xns_vm *vm, xns_obj env, FILE *fp){
+    xns_gc_register(vm, &env);
     #ifndef XNS_LOAD_SINGLE_READ
     while(!feof(fp)){
-       xns_obj expr = xns_read_file(vm, fp);
+        xns_obj expr = xns_read_file(vm, fp);
         eval(expr, env);
     }
     #else
@@ -124,6 +125,7 @@ void xns_load_file(struct xns_vm *vm, xns_obj env, FILE *fp){
     }
     xns_gc_unregister(vm, &repr);
     #endif
+    xns_gc_unregister(vm, &env);
 }
 
 void xns_load_stdlib(struct xns_vm *vm){
@@ -251,6 +253,7 @@ void xns_gc_unregister(struct xns_vm *vm, xns_obj const*ptr){
             }
         }
     }
+    fprintf(vm->debug, "Warning: xns_gc_unregister called on a non-registered pointer %p\n", ptr);
 }
 
 // compact gc frames

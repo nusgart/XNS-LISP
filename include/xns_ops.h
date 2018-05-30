@@ -19,6 +19,12 @@
 #define XNS_OPS_H
 // defines some common operations on objects
 #include "xns_common.h"
+////// general objects
+/*
+ * Hash the given object.  This hash algorithm is NOT cryptographically secure right now, however, that might change.
+ * This only works on simple objects right now.
+ */
+unsigned long xns_hash(xns_obj obj);
 //////symbols and gensyms
 /*
  * Create or find a symbol with the given name.  As symbols are unique in a

@@ -13,11 +13,20 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  */
-// XNS-Lisp primitive array functions
+// XNS-Lisp primitive array functions 693f7257
 #include "xns_lisp.h"
 
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
+
+xns_object *xns_prim_hash   (struct xns_vm *vm, xns_obj env, xns_obj args){
+    if (xns_len(args) != 1){
+        vm->error(vm, "Wrong number of arguments passed to length", args);
+    }
+    xns_obj arg = eval(args->car, env);
+    unsigned long hash = xns_hash(arg);
+    return xns_make_fixnum(vm, (long)hash);
+}
 
 xns_object *xns_prim_length (struct xns_vm *vm, xns_obj env, xns_obj args){
     if (xns_len(args) != 1){

@@ -57,6 +57,7 @@ xns_object *xns_prim_makearray (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_length (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_aref   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_setf$aref (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_hash   (struct xns_vm *vm, xns_obj env, xns_obj args);
 //Predicates
 xns_object *xns_prim_atom   (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_and    (struct xns_vm *vm, xns_obj env, xns_obj args);
@@ -73,6 +74,7 @@ xns_object *xns_prim_divide (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_lesser (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_greater (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_equal  (struct xns_vm *vm, xns_obj env, xns_obj args);
+xns_object *xns_prim_numequal  (struct xns_vm *vm, xns_obj env, xns_obj args);
 /// basic ops
 xns_object *xns_prim_isnan  (struct xns_vm *vm, xns_obj env, xns_obj args);
 xns_object *xns_prim_abs    (struct xns_vm *vm, xns_obj env, xns_obj args);
