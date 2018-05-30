@@ -65,12 +65,16 @@ int main(int argc, char**argv){
 
     ///libedit init
     //EditLine *el = el_init(*argv, stdin, stdout, stderr);
-
     memset((void*)objects, 0, sizeof(objects));
     xns_load_stdlib(vm);
+    xns_obj sym_symbols = xns_intern(vm, "+symbols+");
+    xns_set(vm->env, sym_symbols, vm->symbols);
+    xns_obj sym_env = xns_intern(vm, "+env+");
+    xns_set(vm->env, sym_env, vm->env);
     // REPL -- READ EVAL PRINT LOOP
     while(!feof(stdin)){
         printf("> ");
+        fflush(stdout);
         xns_obj rdobj = xns_read_file(vm, stdin);
         if(!rdobj || feof(stdin)){
             break;
@@ -78,6 +82,7 @@ int main(int argc, char**argv){
         xns_gc_register(vm, &rdobj);
         xns_obj ev = eval(rdobj, vm->toplevel_env);
         xns_print_object(ev);
+        xns_set(vm->env, sym_symbols, vm->symbols);
     }
     printf("\n");
     xns_destroy_vm(vm);
