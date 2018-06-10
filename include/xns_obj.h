@@ -57,7 +57,9 @@ typedef enum xns_type{
   // allow normal C code to interact with xns_objects -- partially implemented
   XNS_HANDLE,
   // an array of xns_objects
-  XNS_ARRAY
+  XNS_ARRAY,
+  // a hash map
+  XNS_MAP
 }  xns_type;
 
 /**
@@ -114,6 +116,15 @@ struct xns_object{
     struct {
         size_t length;
         xns_obj array[];
+    };
+    // hash map
+    struct {
+        size_t nBuckets;
+        size_t nItems;
+        double load_factor;
+        xns_obj bucket_array; // a vector containing the bucket chains
+        bool useEq;
+        //struct xns_bucket* buckets[];
     };
     // rational -- unimplemented -- will change
     void *rational_implementation;

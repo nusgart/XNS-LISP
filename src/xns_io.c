@@ -21,14 +21,48 @@
 
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
-//TODO use sets to 
+
+static char *_xns_to_string(xns_obj object, xns_obj set, size_t *objIndex);
+
 char *xns_to_string(xns_obj object){
+    struct xns_vm *vm = object->vm;
+    R(object);
+    xns_obj set = xns_create_map(vm, 100);
+    set->useEq = true;
+    U(object);
+    size_t idx = 0;
+    char *ret = _xns_to_string(object, set, &idx);
+    return ret;
+}
+
+
+static inline void regmap(xns_obj object, xns_obj set, size_t *objIndex){
+    char *desc = NULL;
+    int as_len = asprintf(&desc, "#%lu#", (*objIndex)++);
+    if(as_len == -1){
+        object->vm->error(object->vm, "asprintf failed!", NULL);
+        abort();
+    }
+    xns_obj str = xns_make_string(object->vm, desc);
+    free(desc); desc = NULL;
+    xns_map_put(set, object, str);
+}
+
+static inline void rmmap(xns_obj object, xns_obj set){
+    xns_map_remove(set, object);
+}
+
+//TODO use sets to 
+static char *_xns_to_string(xns_obj object, xns_obj set, size_t *objIndex){
+    if(!object) return strdup("#<NULLPTR>");
+    struct xns_vm *vm = object->vm;
+    if(xns_map_contains(set, object)) {
+        return strdup(xns_map_get(set, object)->string);
+    }
     //TODO finish implementing
     char *desc, *fmt, *res;
     int as_len=0;
     xns_obj lm = NULL;
-    if(!object) return strdup("#<NULLPTR>");
-    xns_vm *vm = object->vm;
     switch(object->type){
         case XNS_INVL:
         case XNS_INTEGER:
@@ -48,7 +82,12 @@ char *xns_to_string(xns_obj object){
         case XNS_PRIMITIVE:
             return strdup("#<PRIMITIVE>");
         case XNS_HANDLE:
-            return xns_to_string(object->ptr);
+            R(object); R(set);
+            regmap(object, set, objIndex);
+            U(object); U(set);
+            res = _xns_to_string(object->ptr, set, objIndex);
+            rmmap(object, set);
+            return res;
             break;
         case XNS_FIXNUM:
             as_len = asprintf(&desc, "%ld", object->fixnum);
@@ -73,9 +112,12 @@ char *xns_to_string(xns_obj object){
             size_t len = 0;
             R(obj);
             R(object);
+            R(set);
+            regmap(object, set, objIndex);
             while(true){
                 char *o = desc;
-                char *tmp = xns_to_string(obj->car);
+                char *tmp = _xns_to_string(obj->car, set, objIndex);
+                regmap(obj, set, objIndex);
                 len = asprintf(&desc, "%s%s ", desc, tmp);
                 free(tmp);
                 if(len == (size_t)-1){
@@ -83,59 +125,90 @@ char *xns_to_string(xns_obj object){
                 }
                 free(o);
                 if(xns_nil(obj->cdr)) break;
+                if (xns_map_contains(set, obj->cdr)) {
+                    o = desc;
+                    obj = xns_map_get(set, obj->cdr);
+                    as_len = asprintf(&desc, "%s. %s)", desc, obj->string);
+                    if(as_len == -1){
+                        vm->error(vm, "Out of memory when attempting to stringize dotted list end!", NULL);
+                    }
+                    U(obj);
+                    rmmap(object, set);
+                    U(object);
+                    U(set);
+                    free(o);
+                    return desc;
+                }
                 if(obj->cdr->type != XNS_CONS){
                     o = desc;
-                    char *tm2 = xns_to_string(obj->cdr);
-                    as_len = asprintf(&desc, "%s. %s)", desc, xns_to_string(obj->cdr));
+                    char *tm2 = _xns_to_string(obj->cdr, set, objIndex);
+                    as_len = asprintf(&desc, "%s. %s)", desc, _xns_to_string(obj->cdr, set, objIndex));
                     free(tm2);
                     if(as_len == -1){
                         vm->error(vm, "Out of memory when attempting to stringize dotted list end!", NULL);
                     }
                     U(obj);
+                    rmmap(object, set);
                     U(object);
+                    U(set);
                     free(o);
                     return desc;
                 }
                 obj = obj->cdr;
             }
+            rmmap(object, set);
             U(obj);
             U(object);
+            U(set);
             desc[len - 1] = ')';
             return desc;
         case XNS_FUNCTION:
-            R(object);
+            R(object); R(set);
+            regmap(object, set, objIndex);
             lm = xns_cons(vm, object->args, object->body);
             R(lm);
             lm = xns_cons(vm, xns_intern(vm, "lambda"), lm);
             xns_gc_unregister(vm, &lm);
             U(lm);
-            U(object);
-            return xns_to_string(lm);
+            res =  _xns_to_string(lm, set, objIndex);
+            rmmap(object, set);
+            U(object); U(set);
+            return res;
         case XNS_MACRO:
-            R(object);
+            R(object); R(set);
+            regmap(object, set, objIndex);
             lm = xns_cons(vm, object->args, object->body);
             R(lm);
-            lm = xns_cons(vm, xns_intern(vm, "mlambda"), lm);
+            lm = xns_cons(vm, xns_intern(vm, "lambda"), lm);
             xns_gc_unregister(vm, &lm);
             U(lm);
-            U(object);
-            return xns_to_string(lm);
+            res =  _xns_to_string(lm, set, objIndex);
+            rmmap(object, set);
+            U(object); U(set);
+            return res;
         case XNS_ENV:
             // TODO print a list of variables and the values bound to them
             R(object);
-            res = xns_to_string(object->vars);
-            fmt = xns_to_string(object->parent);
-            U(object);
-            asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
+            R(set);
+            regmap(object, set, objIndex);
+            res = _xns_to_string(object->vars, set, objIndex);
+            fmt = _xns_to_string(object->parent, set, objIndex);
+            rmmap(object, set);
+            U(object); U(set);
+            as_len = asprintf(&desc, "#<ENV vars=%s parent=%s>", res, fmt);
+            if(as_len == -1) {
+                vm->error(vm, "asprintf failed in xns_to_string on enviroment", NULL);
+            }
             free(res); free(fmt);
             return desc;
         case XNS_ARRAY:
             desc = strdup("");
             char *sep = "";
-            R(object);
+            R(object); R(set);
+            regmap(object, set, objIndex);
             assert(offsetof(xns_object, length) == offsetof(xns_object, len));
             for(size_t idx = 0; idx < object->length; idx++){
-                char *d = xns_to_string(object->array[idx]);
+                char *d = _xns_to_string(object->array[idx], set, objIndex);
                 as_len = asprintf(&res, "%s%s%s", desc, sep, d);
                 if(as_len == -1){
                     object->vm->error(object->vm, "Asprintf failed while attempting to stringize array!", NULL);
@@ -144,17 +217,23 @@ char *xns_to_string(xns_obj object){
                 free(desc);
                 sep = " ";
                 desc = res;
-            res = NULL;
+                res = NULL;
             }
-            U(object);
-            asprintf(&res, "#(%s)", desc);
+            rmmap(object, set);
+            U(object); U(set);
+            as_len = asprintf(&res, "#(%s)", desc);
+            if(as_len == -1){
+                object->vm->error(object->vm, "Asprintf failed while attempting to stringize array (final step)!", NULL);
+            }
             free(desc);
             return res;
         case XNS_MOVED:
             fmt = "Moved Object --> [%s]";
-            R(object);
-            desc = xns_to_string(object->ptr);
-            U(object);
+            R(object); R(set);
+            regmap(object, set, objIndex);
+            desc = _xns_to_string(object->ptr, set, objIndex);
+            rmmap(object, set);
+            U(object); U(set);
             as_len = asprintf(&res, fmt, desc);
             if(as_len == -1){
                 //TODO error

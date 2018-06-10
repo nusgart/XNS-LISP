@@ -183,6 +183,10 @@ void xns_vm_gc(struct xns_vm *vm, size_t newsize){
                     vm->scan1->array[idx] = _xns_forward(vm, vm->scan1->array[idx]);
                 }
                 break;
+            case XNS_MAP:
+                // this should be sufficient
+                vm->scan1->bucket_array = _xns_forward(vm, vm->scan1->bucket_array);
+                break;
             // nothing in the new heap should have been moved out yet!!!
             case XNS_MOVED:
                 fprintf(vm->debug, "OBJECT ALREADY MOVED!!! %d!\n", vm->scan1->type);

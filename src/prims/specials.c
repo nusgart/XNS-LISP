@@ -434,6 +434,8 @@ xns_object *xns_equal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2
         case XNS_FOREIGN_PTR:
             return arg1->foreign_pointer == arg2->foreign_pointer?vm->T:vm->NIL;
         // TODO implement checks for self-containing arrays or lists.  This will likely require sets to be implemented.
+        case XNS_MAP:
+            return vm->NIL; // not implemented
         case XNS_ARRAY:
             if (arg1->len != arg2->len){
                 return vm->NIL;

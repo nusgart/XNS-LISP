@@ -443,3 +443,112 @@ xns_object *xns_to_fixnum(struct xns_vm *vm, xns_obj value){
             return value;
     }
 }
+// hash map
+// create a map.
+struct xns_object *xns_create_map(struct xns_vm *vm, size_t initalBuckets){
+    xns_obj array = xns_make_array(vm, initalBuckets);
+    R(array);
+    xns_obj map = xns_alloc_object(vm, XNS_MAP, sizeof(intptr_t) * 4);
+    map->nBuckets = initalBuckets;
+    map->nItems = 0;
+    map->load_factor = 0.75;
+    map->bucket_array = array;
+    map->useEq = false;
+    U(array);
+    return map;
+}
+// does the map contain key?
+bool xns_map_contains(xns_obj map, xns_obj key){
+    size_t hash = xns_hash(key) % map->nBuckets;
+    xns_obj cell = map->bucket_array->array[hash];
+    while(!xns_nil(cell)) {
+        bool equal;
+        if(map->useEq){
+            equal = cell->array[0]->object_id == key->object_id;
+        } else {
+            equal = !xns_nil(xns_equal(map->vm, NULL, cell->array[0], key));
+        }
+        if (equal){
+            return true;
+        }
+        cell = cell->array[2];
+    }
+    return false;
+}
+// Get an object from the map.  
+xns_object *xns_map_get(xns_obj map, xns_obj key){
+    size_t hash = xns_hash(key) % map->nBuckets;
+    xns_obj cell = map->bucket_array->array[hash];
+    while(!xns_nil(cell)) {
+        bool equal;
+        if(map->useEq){
+            equal = cell->array[0]->object_id == key->object_id;
+        } else {
+            equal = !xns_nil(xns_equal(map->vm, NULL, cell->array[0], key));
+        }
+        if (equal){
+            return cell->array[1];
+        }
+        cell = cell->array[2];
+    }
+    return map->vm->NIL;
+}
+// put an object in the map.  This may increase 
+void xns_map_put(xns_obj map, xns_obj key, xns_obj val){
+    struct xns_vm *vm = map->vm;
+    R(map); R(key); R(val);
+    map->nItems++;
+    // expand the map if there are too many items
+    if (map->nItems / map->nBuckets > map->load_factor) {
+        xns_map_expand(map, map->nBuckets * 2);
+    }
+    size_t hash = xns_hash(key) % map->nBuckets;
+    xns_obj arr = xns_make_array(vm, 3);
+    arr->array[0] = key;
+    arr->array[1] = val;
+    arr->array[2] = map->bucket_array->array[hash];
+    map->bucket_array->array[hash] = arr;
+    U(map); U(key); U(val);
+}
+
+void xns_map_remove(xns_obj map, xns_obj key){
+    size_t hash = xns_hash(key) % map->nBuckets;
+    // remove the object from the chain
+    xns_obj *overwrite = &(map->bucket_array->array[hash]);
+    xns_obj cell = *overwrite;
+    while(!xns_nil(cell)) {
+        bool equal;
+        if(map->useEq){
+            equal = cell->array[0]->object_id == key->object_id;
+        } else {
+            equal = !xns_nil(xns_equal(map->vm, NULL, cell->array[0], key));
+        }
+        if (equal){
+            *overwrite = cell->array[2];
+        }
+        overwrite = &cell->array[2];
+        cell = cell->array[2];
+    }
+}
+
+// forcibly expand the map to a larger size.
+bool xns_map_expand(xns_obj map, size_t newBuckets){
+    struct xns_vm *vm = map->vm;
+    R(map);
+    xns_obj buckets = map->bucket_array;
+    R(buckets);
+    map->bucket_array = xns_make_array(vm, newBuckets);
+    for (size_t idx = 0; idx < buckets->length; idx++){
+        xns_obj cell = buckets->array[idx];
+        R(cell);
+        while (!xns_nil(cell)){
+            xns_map_put(map, cell->array[0], cell->array[1]);
+            cell = cell->array[2];
+        }
+        U(cell);
+    }
+    map->nBuckets = newBuckets;
+    U(map);
+    U(buckets);
+    return true;
+}

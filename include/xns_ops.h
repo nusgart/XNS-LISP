@@ -60,6 +60,21 @@ xns_object *xns_make_env(xns_vm *vm, xns_obj parent);
 xns_object *xns_assoc(xns_obj env, xns_obj sym);
 xns_object *xns_set(xns_obj env, xns_obj sym, xns_obj value);
 xns_object *xns_bind(xns_obj env, xns_obj sym, xns_obj value);
+///// Hash Map
+// create a map.
+struct xns_object *xns_create_map(struct xns_vm *vm, size_t initalBuckets);
+// destroy a map.
+void xns_delete_map(xns_obj map);
+// does the map contain key?
+bool xns_map_contains(xns_obj map, xns_obj key);
+// Get an object from the map.  
+xns_object *xns_map_get(xns_obj map, xns_obj key);
+// put an object in the map.  This may increase 
+void xns_map_put(xns_obj map, xns_obj key, xns_obj val);
+// forcibly expand the map to a larger size.
+bool xns_map_expand(xns_obj map, size_t newBuckets);
+// remove a key from the map
+void xns_map_remove(xns_obj map, xns_obj key);
 // Cons Cells
 xns_object *xns_car(xns_obj obj);
 xns_object *xns_cdr(xns_obj obj);
