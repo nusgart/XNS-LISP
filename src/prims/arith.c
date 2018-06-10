@@ -79,7 +79,10 @@ xns_object *xns_prim_plus   (struct xns_vm *vm, xns_obj env, xns_obj args){
                 char *desc;
                 if(a->car->type != XNS_STRING) desc = xns_to_string(a->car);
                 else desc = strdup(a->car->string);
-                asprintf(&tmp, "%s%s", out, desc);
+                int as_len = asprintf(&tmp, "%s%s", out, desc);
+                if (as_len < 0) {
+                    vm->error(vm, "OOM in arith.c:xns_prim_plus strings!", args);
+                }
                 free(desc); free(out);
                 out = tmp;
             }

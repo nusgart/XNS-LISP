@@ -82,7 +82,7 @@ M(log);
 M(erf);
 M(exp);
 M(erfc);
-#if defined(__GNUC__) && !defined(__GLIBC__)
+#if defined(__GNUC__) && defined(__linux__) && !defined(__GLIBC__) && !defined(__clang__)
 // fix for musl -- this is somewhat excessive, but musl has no define.
 static inline double gamma(double x){
     return __builtin_gamma(x);

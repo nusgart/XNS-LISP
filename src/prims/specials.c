@@ -390,10 +390,17 @@ xns_object *xns_prim_progn  (struct xns_vm *vm, xns_obj env, xns_obj args){
     return ret;
 }
 extern xns_object *xns_numequal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2);
+
 xns_object *xns_equal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2){
     // check for pointer equality or both being nil but one being NULL
     if (arg1 == arg2 || (xns_nil(arg1) && xns_nil(arg2))) {
         return vm->T;
+    }
+    if (xns_nil(arg1)) {
+        return vm->NIL;
+    }
+    if (xns_nil(arg2)) {
+        return vm->NIL;
     }
     // numeric types are handled elsewhere
     if (arg1->type == XNS_FIXNUM || arg1->type == XNS_DOUBLE || arg1->type == XNS_RATIONAL || arg1->type == XNS_INTEGER){
@@ -429,7 +436,7 @@ xns_object *xns_equal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2
         // TODO implement checks for self-containing arrays or lists.  This will likely require sets to be implemented.
         case XNS_ARRAY:
             if (arg1->len != arg2->len){
-                return false;
+                return vm->NIL;
             }
             for(size_t idx = 0; idx < arg1->len; idx++){
                 xns_object *pred = xns_equal(vm, env, arg1->array[idx], arg2->array[idx]);

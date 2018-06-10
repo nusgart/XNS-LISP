@@ -16,7 +16,7 @@
 // XNS-Lisp primitive IO functions
 // these are really builtins
 #include "xns_lisp.h"
-
+#include <errno.h>
 #define R(a) xns_gc_register(vm, &a)
 #define U(a) xns_gc_unregister(vm, &a)
 
@@ -25,6 +25,10 @@ xns_object *xns_prim_load   (struct xns_vm *vm, xns_obj env, xns_obj args){
     size_t len = res->len;
     char *name = strndup(res->string, len);
     FILE *fp = fopen(name, "r");
+    if (!fp) {
+        vm->error(vm, strerror(errno), res);
+        return vm->NIL;
+    }
     xns_load_file(vm, vm->env, fp);
     fclose(fp);
     free(name);

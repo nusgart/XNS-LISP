@@ -48,6 +48,7 @@ xns_object *xns_gensym(xns_vm *vm);
  * GC, or symbols are accidentally copied. 
  */
 bool xns_eq(xns_obj a, xns_obj b);
+xns_object *xns_equal(struct xns_vm *vm, xns_obj env, xns_obj arg1, xns_obj arg2);
 /*
  * Is the given object eq to NIL?
  * -- xns_nil should be the same is (EQ OBJ 'NIL) unless obj==NULL 

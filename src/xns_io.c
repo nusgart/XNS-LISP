@@ -164,10 +164,14 @@ char *xns_to_string(xns_obj object){
             return res;
         default:
             // TODO ERROR
+            vm->error(vm, "Unknown Object Type in xns_to_string!", object);
             return strdup("ERROR UNKNOWN OBJECT TYPE -- MEMORY CORRUPTED!!!!!!!!!!!!!!");
     }
     char *ret = NULL;
-    asprintf(&ret, "#<Stringizing object at %p (type %s, length %lu)", object, xns_type_to_string(object->type), object->len);
+    as_len = asprintf(&ret, "#<Stringizing object at %p (type %s, length %lu)", object, xns_type_to_string(object->type), object->len);
+    if (as_len == -1){
+        vm->error(vm, "asprintf failed in xns_io.c xns_to_string unknown object!", NULL);
+    }
     return ret;
 }
 
