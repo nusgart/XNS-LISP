@@ -112,3 +112,4 @@
   (list 'push (cons key value) lst))
 
 ;;;; hash map???
+;; need a hash function first

@@ -15,6 +15,9 @@
  */
 #include "xns_lisp.h"
 
+#define R(a) xns_gc_register(vm, &a)
+#define U(a) xns_gc_unregister(vm, &a)
+
 ////symbols and gensyms
 
 /**
@@ -204,10 +207,45 @@ xns_object *xns_append(xns_obj x, xns_obj y){
     return o;
 }
 
-/// modified djb hash function
+struct xns_hash_region{
+    size_t length;
+    size_t used;
+    uintptr_t *ptrs;
+};
+
+static inline unsigned long _xns_hash(xns_obj obj, struct xns_hash_region *region);
+
 unsigned long xns_hash(xns_obj obj){
+    struct xns_hash_region region = {};
+    region.length = 128;
+    region.used = 0;
+    region.ptrs = calloc(128, sizeof(uintptr_t));
+    unsigned long hash = _xns_hash(obj, &region);
+    free(region.ptrs);
+    return hash;
+}
+#define HASH_SEED 0x693f7257
+/// modified djb hash function
+static inline unsigned long _xns_hash(xns_obj obj, struct xns_hash_region *region){
+    if (!obj) {
+        return HASH_SEED;
+    }
+    for (size_t idx = 0; idx < region->used; idx++){
+        if (region->ptrs[idx] == (uintptr_t)obj){
+            return HASH_SEED;
+        }
+    }
     // follow pointer chain to direct object
     while (obj->type == XNS_MOVED || obj->type == XNS_HANDLE){
+        region->ptrs[region->used++] = (uintptr_t)obj;
+        if (region->used >= region->length) {
+            region->ptrs = reallocarray(region->ptrs, 2 * region->length, sizeof(uintptr_t));
+        }
+        for (size_t idx = 0; idx < region->used; idx++){
+            if (region->ptrs[idx] == (uintptr_t)obj){
+                return HASH_SEED;
+            }
+        }  
         obj = obj->ptr;
     }
     // symbols
@@ -220,32 +258,58 @@ unsigned long xns_hash(xns_obj obj){
     }
     // foreign types: just use
     if (obj->type == XNS_FOREIGN_PTR) {
-        return ((uintptr_t) obj->foreign_pointer) *33 ^ hash;
+        return hash * 33 ^ ((uintptr_t) obj->foreign_pointer);
     }
     if (obj->type == XNS_PRIMITIVE) {
-        return ((uintptr_t)obj->primitive) * 33 ^ hash;
+        return hash * 33 ^ ((uintptr_t)obj->primitive);
     }
     if (obj->type == XNS_FUNCTION || obj->type == XNS_MACRO) {
-        return obj->object_id * 33 ^ hash;
+        return hash * 33 ^ obj->object_id;
+    }
+    // numbers
+    if (obj->type == XNS_FIXNUM) {
+        return hash * 33 ^ obj->fixnum;
+    }
+    if (obj->type == XNS_DOUBLE) {
+        union {
+            double in;
+            unsigned long bits;
+        } un;
+        un.in = obj->dval;
+        //unsigned long bits = *(unsigned long *)&obj->dval;
+        return hash * 33 ^ un.bits;
     }
     // array: take the hashes of the elements
     if (obj->type == XNS_ARRAY) {
-        hash ^= obj->type;
+        region->ptrs[region->used++] = (uintptr_t)obj;
+        if (region->used >= region->length) {
+            region->ptrs = reallocarray(region->ptrs, 2 * region->length, sizeof(uintptr_t));
+        }
+        hash = hash * 33 ^ obj->type;
         for(size_t idx = 0; idx < obj->length; idx++){
-            hash = hash * 33 ^ xns_hash(obj->array[idx]);
+            hash = hash * 33 ^ _xns_hash(obj->array[idx], region);
         }
         return hash;
     }
     // conses: take the hashes of the cars
     if (obj->type == XNS_CONS) {
-        hash ^= obj->type;
+        hash = hash * 33 ^ obj->type;
         while (!xns_nil(obj) && obj->type == XNS_CONS) {
-            hash = hash * 33 ^ xns_hash(obj->car);
+            region->ptrs[region->used++] = (uintptr_t)obj;
+            if (region->used >= region->length) {
+                region->ptrs = reallocarray(region->ptrs, 2 * region->length, sizeof(uintptr_t));
+            }
+            for (size_t idx = 0; idx < region->used; idx++){
+                if (region->ptrs[idx] == (uintptr_t)obj){
+                    return HASH_SEED;
+                }
+            }
+            hash = hash * 33 ^ _xns_hash(obj->car, region);
             obj = obj->cdr;
         }
         // handle dotted pairs
         if (!xns_nil(obj)) {
-            hash = hash * 33 ^ xns_hash(obj);
+            hash = hash * 33 ^ _xns_hash(obj, region);
         }
         return hash;
     }
@@ -317,29 +381,21 @@ xns_object *xns_make_array(struct xns_vm *vm, size_t len){
     return obj;
 }
 xns_object *xns_make_function(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){
-    xns_gc_register(vm, &params);
-    xns_gc_register(vm, &body);
-    xns_gc_register(vm, &env);
+    R(params); R(body); R(env);
     xns_obj obj = xns_alloc_object(vm, XNS_FUNCTION, 3 * sizeof(struct xns_object*));
     obj->args = params;
     obj->body = body;
     obj->env = env;
-    xns_gc_unregister(vm, &params);
-    xns_gc_unregister(vm, &body);
-    xns_gc_unregister(vm, &env);
+    U(params); U(body); U(env);
     return obj;
 }
 xns_object *xns_make_macro(struct xns_vm *vm, xns_obj params, xns_obj body, xns_obj env){
-    xns_gc_register(vm, &params);
-    xns_gc_register(vm, &body);
-    xns_gc_register(vm, &env);
+    R(params); R(body); R(env);
     xns_obj obj = xns_alloc_object(vm, XNS_MACRO, 3 * sizeof(struct xns_object*));
     obj->args = params;
     obj->body = body;
     obj->env = env;
-    xns_gc_unregister(vm, &params);
-    xns_gc_unregister(vm, &body);
-    xns_gc_unregister(vm, &env);
+    U(params); U(body); U(env);
     return obj;
 }
 

@@ -34,6 +34,18 @@ typedef struct xns_object *volatile xns_obj;
 #else
 typedef struct xns_object *xns_obj;
 #endif
+struct xns_bucket {
+    xns_obj key;
+    xns_obj value;
+    struct xns_bucket *next;
+};
+struct xns_map {
+    size_t nBuckets;
+    size_t nItems;
+    double load_factor;
+    xns_obj bucket_array; // a vector containing the bucket chains
+    //struct xns_bucket* buckets[];
+};
 typedef struct xns_vm xns_vm;
 typedef struct xns_object *(*xns_primitive)(struct xns_vm *vm, xns_obj env, xns_obj obj); 
 #endif //XNS_COMMON_H
