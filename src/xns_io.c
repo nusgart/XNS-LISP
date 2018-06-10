@@ -311,7 +311,7 @@ struct xns_priv_cookie{
     int flags;
 };
 static ssize_t cread(void *cook, char *buf, size_t size){
-    xns_priv_cookie *cookie = cook;
+    struct xns_priv_cookie *cookie = cook;
     if (cookie->off >= cookie->len) {
         return 0;
     }
@@ -324,7 +324,7 @@ static ssize_t cread(void *cook, char *buf, size_t size){
 }
 
 static ssize_t cwrite(void *cook, char *buf, size_t size){
-    xns_priv_cookie *cookie = cook;
+    struct xns_priv_cookie *cookie = cook;
     if (cookie->off >= cookie->len) {
         return 0;
     }
@@ -340,7 +340,7 @@ static int cseek(void *cook, off64_t *off, int whence){
     if (whence == SEEK_END || !off){
         return -1;
     }
-    xns_priv_cookie *ck = cook;
+    struct xns_priv_cookie *ck = cook;
     if (whence == SEEK_SET){
         if(*off > ck->len){
             *off = ck->len;
@@ -364,19 +364,20 @@ static int cclose(void *cook){
 }
 
 FILE *fmemopen(void *mem, size_t len, const char *mode){
-    xns_priv_cookie *cookie = calloc(sizeof(xns_priv_cookie), 1);
+    struct xns_priv_cookie *cookie = calloc(sizeof(struct xns_priv_cookie), 1);
     cookie->mem = mem;
     cookie->len = len;
     cookie->flags = ~0;
     // if(strstr(flags, "r")){
     //     cookie.flags |= O_RDONLY;
     // } // TODO implement flags
-
+    /*
     cookie_io_functions_t ck = {};
     ck.read = cread;
     ck.write = cwrite;
     ck.close = cclose;
-    ck.seek = cseek;
+    ck.seek = cseek;*/
+    return funopen(cookie, cread, cwrite, cseek, cclose);
 }
 #endif
 
